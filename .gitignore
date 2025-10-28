@@ -1,0 +1,53 @@
+# Private content - DO NOT COMMIT
+source/*.md
+source/*.bak
+assets/**
+output/*.pdf
+*.jpg
+*.png
+
+# Private content - DO NOT COMMIT
+source/*.md
+source/*.bak
+assets/**
+output/*.pdf
+*.jpg
+*.png
+
+# LaTeX auxiliary files
+*.aux
+*.log
+...
+
+# LaTeX auxiliary files
+*.aux
+*.log
+*.out
+*.toc
+*.synctex.gz
+*.fdb_latexmk
+*.fls
+*.idx
+*.ilg
+*.ind
+
+# macOS
+.DS_Store
+._*
+
+# Backups
+*.bak
+
+# Output PDFs (optional - comment out if you want to track them)
+# output/*.pdf
+
+# VS Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Temporary files
+*~
+\#*\#

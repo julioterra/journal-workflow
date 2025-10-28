@@ -1,0 +1,64 @@
+{
+  // LaTeX Workshop Settings
+  "latex-workshop.latex.recipes": [
+    {
+      "name": "Pandoc → XeLaTeX",
+      "tools": [
+        "pandoc-xelatex"
+      ]
+    }
+  ],
+  "latex-workshop.latex.tools": [
+    {
+      "name": "pandoc-xelatex",
+      "command": "pandoc",
+      "args": [
+        "%DOC%.md",
+        "--from=markdown",
+        "--to=latex",
+        "--template=../templates/journal-template.tex",
+        "--lua-filter=../filters/name-filter.lua",
+        "--lua-filter=../filters/tag-filter.lua",
+        "--pdf-engine=xelatex",
+        "--toc",
+        "--toc-depth=2",
+        "-o",
+        "../output/%DOCFILE%.pdf"
+      ],
+      "env": {}
+    }
+  ],
+  
+  // Auto-build settings
+  "latex-workshop.latex.autoBuild.run": "onSave",
+  "latex-workshop.latex.autoClean.run": "onBuilt",
+  
+  // Viewer settings
+  "latex-workshop.view.pdf.viewer": "tab",
+  "latex-workshop.view.pdf.internal.synctex.keybinding": "double-click",
+  
+  // File associations
+  "files.associations": {
+    "*.tex": "latex",
+    "*.lua": "lua"
+  },
+  
+  // Markdown settings
+  "markdown.preview.breaks": true,
+  "markdown.preview.linkify": true,
+  
+  // Editor settings
+  "editor.wordWrap": "on",
+  "editor.formatOnSave": false,
+  
+  // File exclusions for cleaner workspace
+  "files.exclude": {
+    "**/.DS_Store": true,
+    "**/._*": true,
+    "**/*.aux": true,
+    "**/*.log": true,
+    "**/*.out": true,
+    "**/*.toc": true,
+    "**/*.synctex.gz": true
+  }
+}

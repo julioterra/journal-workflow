@@ -1,0 +1,170 @@
+% Journal Template for Pandoc
+% Optimized for print-ready PDF output
+
+\documentclass[11pt,twoside,openright]{book}
+
+% ============================================================================
+% PACKAGES
+% ============================================================================
+
+% Fonts and Typography
+\usepackage{fontspec}
+\usepackage{microtype}
+\usepackage{xspace}
+\setmainfont{Palatino}
+\setsansfont{Helvetica Neue}
+\setmonofont[Scale=0.9]{Menlo}
+
+% Page Layout
+\usepackage[
+  paperwidth=6in,
+  paperheight=9in,
+  top=0.75in,
+  bottom=0.75in,
+  inner=0.875in,
+  outer=0.625in,
+  bindingoffset=0.25in
+]{geometry}
+
+% Colors
+\usepackage{xcolor}
+\definecolor{tagcolor}{RGB}{100,149,237}      % Cornflower blue for tags
+\definecolor{namecolor}{RGB}{220,20,60}       % Crimson for names
+\definecolor{linkcolor}{RGB}{70,130,180}      % Steel blue for links
+\definecolor{headingcolor}{RGB}{47,79,79}     % Dark slate gray
+\definecolor{tag-default}{RGB}{100,149,237}            % Cornflower blue
+
+% Headers and Footers
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[LE]{\small\textit{\leftmark}}
+\fancyhead[RO]{\small\textit{\rightmark}}
+\fancyfoot[LE,RO]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0pt}
+
+% Chapter and Section Styling
+\usepackage{titlesec}
+\titleformat{\chapter}[display]
+  {\normalfont\huge\bfseries\color{headingcolor}}
+  {\chaptertitlename\ \thechapter}{20pt}{\Huge}
+\titleformat{\section}
+  {\normalfont\Large\bfseries\color{headingcolor}}
+  {\thesection}{1em}{}
+\titleformat{\subsection}
+  {\normalfont\large\bfseries\color{headingcolor}}
+  {\thesubsection}{1em}{}
+
+% Lists
+\usepackage{enumitem}
+\setlist{nosep, leftmargin=*}
+
+% Tables
+\usepackage{longtable,booktabs,array}
+\usepackage{calc}
+\usepackage{tabularx}
+\setlength{\LTpre}{0pt}
+\setlength{\LTpost}{0pt}
+
+% Graphics
+\usepackage{graphicx}
+\graphicspath{{../assets/}}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\providecommand{\pandocbounded}[1]{#1}
+
+% Hyperlinks
+\usepackage{hyperref}
+\hypersetup{
+  colorlinks=true,
+  linkcolor=linkcolor,
+  filecolor=linkcolor,
+  urlcolor=linkcolor,
+  pdfborder={0 0 0},
+  breaklinks=true
+}
+
+% Index Generation
+\usepackage{imakeidx}
+\makeindex[name=names,title=Index of Names]
+\makeindex[name=tags,title=Index of Tags]
+
+% Tag command - takes display name and original name
+\makeatletter
+\newcommand{\tag}[2]{%
+  \@ifundefined{color@tag-#2}{%
+    \textcolor{tag-default}{\textbf{\#{}#1}}%
+  }{%
+    \textcolor{tag-#2}{\textbf{\#{}#1}}%
+  }%
+  \index[tags]{#1}%
+  \space% Add space after each tag
+}
+\makeatother
+
+% Person command - takes display name and canonical name
+% \person{display name}{canonical name}
+% Display name is shown in the text
+% Canonical name is used for indexing
+\newcommand{\person}[2]{%
+  \textcolor{namecolor}{\textbf{#1}}%
+  \index[names]{#2}%
+  \xspace%
+}
+
+% Metadata
+$if(title)$
+\title{$title$}
+$endif$
+$if(author)$
+\author{$author$}
+$endif$
+$if(date)$
+\date{$date$}
+$endif$
+
+% ============================================================================
+% DOCUMENT
+% ============================================================================
+
+\begin{document}
+
+% Front Matter
+\frontmatter
+
+$if(title)$
+\maketitle
+$endif$
+
+$if(abstract)$
+\begin{abstract}
+$abstract$
+\end{abstract}
+$endif$
+
+\tableofcontents
+
+% Main Content
+\mainmatter
+
+$body$
+
+% Back Matter
+\backmatter
+
+% Print indexes
+\printindex[names]
+\printindex[tags]
+
+\end{document}
