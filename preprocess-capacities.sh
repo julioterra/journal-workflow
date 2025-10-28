@@ -28,30 +28,65 @@ sed -i '' 's/^    //' "$INPUT_FILE"
 sed -i '' 's/<!-- *\(!\[.*\](assets\/[^)]*)\) *-->/\1/g' "$INPUT_FILE"
 
 # Step 2.5: Fix image paths to include assets/ prefix
-sed -i '' 's#\(!\[.*\](\)PDFs/#\1assets/PDFs/#g' "$INPUT_FILE"
+sed -i '' 's#](PDFs/#](assets/PDFs/#g' "$INPUT_FILE"
+sed -i '' 's#](Images/#](assets/Images/#g' "$INPUT_FILE"
 
 # Step 3: Find and convert PDFs
 echo "🖼️  Converting PDFs to JPG..."
 
-grep -o '!\[.*\](assets/[^)]*\.pdf)' "$INPUT_FILE" | grep -o 'assets/[^)]*.pdf' | while read pdf_path; do
-    # Decode URL encoding
+# Step 3: Find and convert PDFs, handle multi-page
+echo "🖼️  Converting PDFs to JPG..."
+
+# First pass: convert all PDFs
+grep -o '!\[.*\](assets/[^)]*\.pdf)' "$INPUT_FILE" | grep -o 'assets/[^)]*.pdf' | sort -u | while read pdf_path; do
     pdf_path=$(echo "$pdf_path" | sed 's/%20/ /g')
     
     if [ -f "$pdf_path" ]; then
-        jpg_path="${pdf_path%.pdf}.jpg"
+        jpg_base="${pdf_path%.pdf}"
         
-        # Convert PDF to JPG (all pages)
         if command -v magick &> /dev/null; then
-            magick "$pdf_path" -density 300 -quality 90 "$jpg_path"
-            echo "  ✓ Converted: $(basename "$pdf_path")"
+            magick "$pdf_path" -density 300 -quality 90 "${jpg_base}.jpg"
         elif command -v convert &> /dev/null; then
-            convert -density 300 "$pdf_path" -quality 90 "$jpg_path"
-            echo "  ✓ Converted: $(basename "$pdf_path")"
+            convert -density 300 "$pdf_path" -quality 90 "${jpg_base}.jpg"
         fi
-    else
-        echo "  ✗ Not found: $pdf_path"
+        echo "  ✓ Converted: $(basename "$pdf_path")"
     fi
 done
+
+# Second pass: update markdown references
+# Handle both single-page (file.jpg) and multi-page (file-0.jpg, file-1.jpg, etc.)
+grep -n '!\[.*\](assets/[^)]*\.pdf)' "$INPUT_FILE" | while IFS=: read line_num full_line; do
+    # Extract the PDF path
+    pdf_ref=$(echo "$full_line" | grep -o 'assets/[^)]*.pdf' | sed 's/%20/ /g')
+    jpg_base="${pdf_ref%.pdf}"
+    
+    # Check if it's multi-page
+    if [ -f "${jpg_base}-0.jpg" ]; then
+        # Multi-page: create references for all pages
+        page_num=0
+        new_lines=""
+        while [ -f "${jpg_base}-${page_num}.jpg" ]; do
+            if [ $page_num -gt 0 ]; then
+                new_lines="${new_lines}\n"
+            fi
+            # Extract original alt text
+            alt_text=$(echo "$full_line" | sed 's/.*!\[\([^]]*\)\].*/\1/')
+            jpg_ref=$(echo "$pdf_ref" | sed 's/ /%20/g')
+            new_lines="${new_lines}![${alt_text} - Page $((page_num + 1))](${jpg_ref%.pdf}-${page_num}.jpg)"
+            page_num=$((page_num + 1))
+        done
+        
+        # Replace the line
+        escaped_line=$(echo "$full_line" | sed 's/[\/&]/\\&/g' | sed 's/\[/\\[/g' | sed 's/\]/\\]/g' | sed 's/\*/\\*/g')
+        sed -i '' "${line_num}s|.*|${new_lines}|" "$INPUT_FILE"
+        echo "  📄 Multi-page: $(basename "$pdf_ref") → ${page_num} images"
+    else
+        # Single page: simple replacement
+        sed -i '' "${line_num}s|\.pdf)|.jpg)|" "$INPUT_FILE"
+    fi
+done
+
+echo "✅ Complete! Backup: ${INPUT_FILE}.bak"
 
 # Step 4: Update markdown to reference JPGs
 sed -i '' 's/\(!\[.*\](assets\/[^)]*\)\.pdf)/\1.jpg)/g' "$INPUT_FILE"
