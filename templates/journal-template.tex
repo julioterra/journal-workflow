@@ -39,6 +39,9 @@
   {\needspace{5\baselineskip}\normalfont\Large\bfseries\color{headingcolor}}}
 \makeatother
 
+% Prevent floats from crossing section boundaries
+\usepackage[section]{placeins}
+
 % No numbering for sections
 \setcounter{secnumdepth}{0}
 \usepackage{titlesec}
@@ -82,10 +85,11 @@
   {\thesubsection}{1em}{}
 
 % --- prevent page break before chapters (book/report insert a clearpage) ---
-\usepackage{etoolbox}
-\makeatletter
-\patchcmd{\chapter}{\if@openright\cleardoublepage\else\clearpage\fi}{}{}{}
-\makeatother
+% \usepackage{etoolbox}
+% \makeatletter
+% \patchcmd{\chapter}
+%  {\if@openright\cleardoublepage\else\clearpage\fi}{}{}{}
+% \makeatother
 
 % --- make running headers show only the chapter title (not "Chapter N") ---
 \makeatletter
@@ -126,6 +130,9 @@
 
 % Apply scaling
 \setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+
+% Prevent floats from crossing section boundaries
+\usepackage[section]{placeins}
 
 % Allow images to float but keep them close to text
 \makeatletter
@@ -194,6 +201,7 @@ $endif$
 \frontmatter
 
 $if(title)$
+\date{} 
 \maketitle
 $endif$
 
@@ -203,7 +211,7 @@ $abstract$
 \end{abstract}
 $endif$
 
-\tableofcontents
+%\tableofcontents
 
 % Main Content
 \mainmatter
