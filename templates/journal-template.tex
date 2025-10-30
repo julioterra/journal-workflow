@@ -57,11 +57,12 @@
 \usepackage{fancyhdr}
 \pagestyle{fancy}
 \fancyhf{}
-\fancyhead[LE]{\small\textit{\leftmark}}
-\fancyhead[RO]{\small\textit{\rightmark}}
+%\fancyhead[LE,RO]{\small\textit{\leftmark}}
+%\fancyhead[RO]{\small\textit{\rightmark}}
+\fancyfoot[LO,RE]{\small\textit{\leftmark}}
 \fancyfoot[LE,RO]{\thepage}
-\renewcommand{\headrulewidth}{0.4pt}
-\renewcommand{\footrulewidth}{0pt}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0.4pt}
 
 % Chapter and Section Styling
 \usepackage{titlesec}
@@ -85,7 +86,16 @@
 \makeatletter
 \patchcmd{\chapter}{\if@openright\cleardoublepage\else\clearpage\fi}{}{}{}
 \makeatother
+
+% --- make running headers show only the chapter title (not "Chapter N") ---
+\makeatletter
+\renewcommand{\chaptermark}[1]{\markboth{#1}{}}
+\makeatother
   
+% --- ToC settings ---
+% show only chapters in the table of contents
+\setcounter{tocdepth}{0}  
+
 % Lists
 \usepackage{enumitem}
 \setlist{nosep, leftmargin=*}
