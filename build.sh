@@ -54,13 +54,7 @@ pandoc "$INPUT_FILE" \
   --lua-filter=filters/name-filter.lua \
   --lua-filter=filters/tag-filter.lua \
   --pdf-engine=xelatex \
-  --toc \
-  --toc-depth=2 \
-  --number-sections \
   -V documentclass=book \
-  -V papersize=custom \
-  -V geometry:paperwidth=6in \
-  -V geometry:paperheight=9in \
   -o "$OUTPUT_FILE"
 
 # Check if conversion was successful
