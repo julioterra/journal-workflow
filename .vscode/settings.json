@@ -35,7 +35,7 @@
         "../source/%DOCFILE%.md",
         "--from=markdown",
         "--to=latex",
-        "--template=../templates/journal-template.tex",
+        "--template=../templates/journal-template-auto.tex",
         "--lua-filter=../filters/link-to-footnote.lua",
         "--lua-filter=../filters/name-filter.lua",
         "--lua-filter=../filters/tag-filter.lua",
@@ -47,7 +47,7 @@
       ],
       "env": {}
     },
-    {
+    { 
       "name": "lualatex",
       "command": "lualatex",
       "args": [
