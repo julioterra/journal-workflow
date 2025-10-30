@@ -1,10 +1,29 @@
 {
-  // LaTeX Workshop Settings
   "latex-workshop.latex.recipes": [
     {
       "name": "Pandoc → XeLaTeX",
       "tools": [
         "pandoc-xelatex"
+      ]
+    },
+    {
+      "name": "lualatex",
+      "tools": [
+        "lualatex"
+      ]
+    },
+    {
+      "name": "lualatex -> biber -> lualatex",
+      "tools": [
+        "lualatex",
+        "biber",
+        "lualatex"
+      ]
+    },
+    {
+      "name": "latexmk (lualatex)",
+      "tools": [
+        "lualatexmk"
       ]
     }
   ],
@@ -14,6 +33,7 @@
       "command": "pandoc",
       "args": [
         "%DOC%.md",
+        "-lualatex",
         "--from=markdown",
         "--to=latex",
         "--template=../templates/journal-template.tex",
@@ -26,32 +46,53 @@
         "../output/%DOCFILE%.pdf"
       ],
       "env": {}
+    },
+    {
+      "name": "lualatex",
+      "command": "lualatex",
+      "args": [
+        "-synctex=1",
+        "-interaction=nonstopmode",
+        "-file-line-error",
+        "-pdf",
+        "%DOC%"
+      ]
+    },
+    // You can also add a latexmk tool specifically for lualatex
+    {
+      "name": "lualatexmk",
+      "command": "latexmk",
+      "args": [
+        "-synctex=1",
+        "-interaction=nonstopmode",
+        "-file-line-error",
+        "-lualatex",
+        "-f",
+        "-outdir=%OUTDIR%",
+        "%DOC%"
+      ]
+    },
+    // Biber for bibliography if you're using it
+    {
+      "name": "biber",
+      "command": "biber",
+      "args": [
+        "%DOCFILE%"
+      ]
     }
   ],
-  
-  // Auto-build settings
   "latex-workshop.latex.autoBuild.run": "onSave",
   "latex-workshop.latex.autoClean.run": "onBuilt",
-  
-  // Viewer settings
   "latex-workshop.view.pdf.viewer": "tab",
   "latex-workshop.view.pdf.internal.synctex.keybinding": "double-click",
-  
-  // File associations
   "files.associations": {
     "*.tex": "latex",
     "*.lua": "lua"
   },
-  
-  // Markdown settings
   "markdown.preview.breaks": true,
   "markdown.preview.linkify": true,
-  
-  // Editor settings
   "editor.wordWrap": "on",
   "editor.formatOnSave": false,
-  
-  // File exclusions for cleaner workspace
   "files.exclude": {
     "**/.DS_Store": true,
     "**/._*": true,

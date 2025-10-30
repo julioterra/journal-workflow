@@ -91,4 +91,7 @@ echo "✅ Complete! Backup: ${INPUT_FILE}.bak"
 # Step 4: Update markdown to reference JPGs
 sed -i '' 's/\(!\[.*\](assets\/[^)]*\)\.pdf)/\1.jpg)/g' "$INPUT_FILE"
 
+# Step 5: Add blank lines before and after images for spacing
+sed -i '' 's/^\(!\[.*\].*\)$/\n\1\n/' "$INPUT_FILE"
+
 echo "✅ Complete! Backup: ${INPUT_FILE}.bak"
