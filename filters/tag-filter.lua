@@ -1,9 +1,15 @@
 -- tag-filter.lua
 -- Converts #tags to colored, indexed tags in LaTeX output
 -- Displays tags in lowercase with spaces (e.g., #DomesticStaff → #domestic staff)
+-- Keeps all-caps acronyms unchanged (e.g., #MWT → #MWT)
 
 -- Function to convert CamelCase to lowercase with spaces
 function camel_to_lower_spaced(str)
+  -- Check if the string is all uppercase (acronym)
+  if str:match("^[A-Z]+$") then
+    return str:lower()  -- Convert acronyms to lowercase without spaces
+  end
+  
   -- Insert space before capital letters
   local spaced = str:gsub("(%u)", " %1")
   -- Remove leading space and convert to lowercase
