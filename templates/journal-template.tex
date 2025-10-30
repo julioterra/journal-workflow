@@ -15,8 +15,6 @@
 \setsansfont{Helvetica Neue}
 \setmonofont[Scale=0.9]{Menlo}
 
-
-
 % Page Layout
 \usepackage[
   paperwidth=6in,
@@ -44,9 +42,8 @@
 % No numbering for sections
 \setcounter{secnumdepth}{0}
 \usepackage{titlesec}
-\titleformat{\chapter}[hang]{\normalfont\huge\bfseries}{}{0pt}{}
-\titlespacing*{\chapter}{0pt}{0pt}{1em}
-
+\titleformat{\chapter}[block]{\normalfont\Large\bfseries}{}{0pt}{}
+\titlespacing*{\chapter}{0pt}{0pt}{0.5em}
 
 % Colors
 \usepackage{xcolor}
@@ -68,16 +65,27 @@
 
 % Chapter and Section Styling
 \usepackage{titlesec}
-\titleformat{\chapter}[display]
-  {\normalfont\huge\bfseries\color{headingcolor}}
-  {\chaptertitlename\ \thechapter}{20pt}{\Huge}
-\titleformat{\section}
+% title stilling. Remove "chapter X". Leave title only.
+\titleformat{\chapter}[hang]
+  {\normalfont\Huge\bfseries}
+  {}{0pt}{}
+\titlespacing*{\chapter}
+  {0pt}{1.5em}{1em} % tight top/bottom spacing; tweak as you like
+% section stylling. Adjust font size and color
+  \titleformat{\section}
   {\normalfont\Large\bfseries\color{headingcolor}}
   {\thesection}{1em}{}
+% subsection styling. Adjust font size and color
 \titleformat{\subsection}
   {\normalfont\large\bfseries\color{headingcolor}}
   {\thesubsection}{1em}{}
 
+% --- prevent page break before chapters (book/report insert a clearpage) ---
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd{\chapter}{\if@openright\cleardoublepage\else\clearpage\fi}{}{}{}
+\makeatother
+  
 % Lists
 \usepackage{enumitem}
 \setlist{nosep, leftmargin=*}
@@ -153,6 +161,7 @@
   \index[names]{#2}%
   \xspace%
 }
+
 
 % Metadata
 $if(title)$
