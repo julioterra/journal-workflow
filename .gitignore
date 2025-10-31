@@ -1,17 +1,9 @@
 # Private content - DO NOT COMMIT
+source/
 source/*.md
 source/*.bak
-assets/**
-output/*.pdf
-*.jpg
-*.png
-
-# Private content - DO NOT COMMIT
-source/** */
-source/*.md
-source/*.bak
-assets/**
-output/*.pdf
+assets/
+output/
 *.jpg
 *.png
 
@@ -52,3 +44,13 @@ output/*.pdf
 # Temporary files
 *~
 \#*\#
+source/daily-notes/2023-09-04.md
+source/daily-notes/2023-09-05.md
+source/daily-notes/2023-09-06.md
+source/daily-notes/2023-09-07.md
+source/daily-notes/2023-09-08.md
+source/daily-notes/2023-09-09.md
+source/daily-notes/2023-09-13.md
+source/daily-notes/2023-09-14.md
+source/daily-notes/2023-09-17.md
+source/daily-notes/2025-08-11.md
