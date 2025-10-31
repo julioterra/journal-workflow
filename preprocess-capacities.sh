@@ -24,6 +24,19 @@ cp "$INPUT_FILE" "${INPUT_FILE}.bak"
 sed -i '' 's/^- \(#[a-zA-Z]\)/\1/g' "$INPUT_FILE"
 sed -i '' 's/^    //' "$INPUT_FILE"
 
+# Step 1b: Handle different top-level tags
+# - PersonalJournal: remove entirely
+# - ToDo, FoodJournal, Grateful, WorkStuff: convert to h2 with proper spacing
+
+# Remove PersonalJournal tag
+sed -i '' -E '/^#PersonalJournal ?$/d' "$INPUT_FILE"
+
+# Convert other top-level tags to h2 headings (add spaces before capitals, remove #)
+sed -i '' 's/^#ToDos$/## To Dos/' "$INPUT_FILE"
+sed -i '' 's/^#FoodJournal$/## Food Journal/' "$INPUT_FILE"
+sed -i '' 's/^#gratitude$/## Gratitude/' "$INPUT_FILE"
+sed -i '' 's/^#WorkStuff$/## Work Stuff/' "$INPUT_FILE"
+
 # Step 2: Uncomment image lines that reference assets
 sed -i '' 's/<!-- *\(!\[.*\](assets\/[^)]*)\) *-->/\1/g' "$INPUT_FILE"
 
