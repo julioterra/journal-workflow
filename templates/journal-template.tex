@@ -1,7 +1,7 @@
 % Journal Template for Pandoc
 % Optimized for print-ready PDF output
 
-\documentclass[10pt,twoside,openright]{book}
+\documentclass[10pt,twoside,openany]{book}
 
 % ============================================================================
 % PACKAGES
@@ -74,7 +74,7 @@
   {\normalfont\Huge\bfseries}
   {}{0pt}{}
 \titlespacing*{\chapter}
-  {0pt}{1.5em}{1em} % tight top/bottom spacing; tweak as you like
+  {0pt}{-20pt}{1.5em} % tight top/bottom spacing; tweak as you like
 % section stylling. Adjust font size and color
   \titleformat{\section}
   {\normalfont\Large\bfseries\color{headingcolor}}
@@ -103,6 +103,12 @@
 % Lists
 \usepackage{enumitem}
 \setlist{nosep, leftmargin=*}
+
+% Task list support with nicer boxes
+\usepackage{amssymb}
+\usepackage{pifont}
+\newcommand{\checkbox}{\ensuremath{\square}}
+\newcommand{\checkedbox}{\rlap{\ensuremath{\square}}\large\hspace{1pt}\ding{51}}
 
 % Tables
 \usepackage{longtable,booktabs,array}
