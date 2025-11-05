@@ -50,11 +50,11 @@ unzip -q "$ZIP_FILE" -d "$EXPORT_DIR"
 echo -e "${GREEN}  ✓ Extracted successfully${NC}"
 
 # Archive the zip file with timestamp
-mkdir -p "$ARCHIVE_DIR"
-TIMESTAMP=$(date "+%Y-%m-%d_%H-%M-%S")
-ARCHIVE_NAME="capacities-export-${TIMESTAMP}.zip"
-mv "$ZIP_FILE" "$ARCHIVE_DIR/$ARCHIVE_NAME"
-echo -e "${GREEN}  ✓ Archived to: $ARCHIVE_DIR/$ARCHIVE_NAME${NC}"
+# mkdir -p "$ARCHIVE_DIR"
+# TIMESTAMP=$(date "+%Y-%m-%d_%H-%M-%S")
+# ARCHIVE_NAME="capacities-export-${TIMESTAMP}.zip"
+# mv "$ZIP_FILE" "$ARCHIVE_DIR/$ARCHIVE_NAME"
+# echo -e "${GREEN}  ✓ Archived to: $ARCHIVE_DIR/$ARCHIVE_NAME${NC}"
 
 # ============================================================================
 # STEP 0.5: Clear Previous Output
@@ -209,6 +209,73 @@ else
 fi
 
 # ============================================================================
+# STEP 4: Build Reference Map
+# ============================================================================
+
+echo -e "${GREEN}📇 Step 4: Building reference map...${NC}"
+
+REFERENCE_MAP="source/references.json"
+
+# Start JSON file
+echo "{" > "$REFERENCE_MAP"
+
+reference_count=0
+first_entry=true
+
+# Process all reference folders
+for folder in People Organizations Projects Books Definitions Pages; do
+    folder_path="$EXPORT_DIR/$folder"
+    
+    if [ -d "$folder_path" ]; then
+        # echo "$folder_path"
+
+        # Find all .md files in this folder
+        for ref_file in "$folder_path"/*.md; do
+            # echo "ref_file: $ref_file"
+
+            # Find title in front matter of each file
+            if [ -f "$ref_file" ]; then
+                # Extract title from front matter
+                # 🛑 FIX HERE: Pass the loop variable ($ref_file) to awk
+                title=$(
+                    cat "$ref_file" | \
+                    tr -d '\r' | \
+                    grep -E '^[ \t]*title:' | \
+                    sed -E 's/^[ \t]*title:[ \t]*(.*)/\1/'
+                )
+                echo "title: $title"
+                
+                if [ -n "$title" ]; then
+                    # ... (rest of the script is correct for processing and JSON formatting) ...
+                    # Get relative path from export root
+                    rel_path=$(echo "$ref_file" | sed "s|$EXPORT_DIR/||")
+                    
+                    # Add comma for subsequent entries
+                    if [ "$first_entry" = false ]; then
+                        echo "," >> "$REFERENCE_MAP"
+                    fi
+                    first_entry=false
+                    
+                    # Add entry to JSON (escape quotes in title)
+                    # NOTE: Using a single 'sed' pipeline is usually cleaner for quote escaping
+                    title_escaped=$(echo "$title" | sed 's/"/\\"/g') 
+                    printf '  "%s": {\n    "name": "%s",\n    "type": "%s"\n  }' \
+                        "$rel_path" "$title_escaped" "$folder" >> "$REFERENCE_MAP"
+                    
+                    reference_count=$((reference_count + 1))
+                fi
+            fi
+        done
+    fi
+done
+
+# Close JSON file
+echo "" >> "$REFERENCE_MAP"
+echo "}" >> "$REFERENCE_MAP"
+
+echo -e "${GREEN}  ✓ Mapped $reference_count references${NC}"
+
+# ============================================================================
 # Summary
 # ============================================================================
 
@@ -219,6 +286,7 @@ echo "Output:"
 echo "  📝 Combined journal: $OUTPUT_FILE"
 echo "  📄 PDFs converted:   $pdf_count files → $ASSETS_DIR/PDFs/Media/"
 echo "  🖼️  Images copied:    $image_count files → $ASSETS_DIR/Images/Media/"
+echo "  📇 References mapped: $reference_count entities → source/references.json"
 echo "  📦 Archived zip:     $ARCHIVE_DIR/$ARCHIVE_NAME"
 echo ""
 echo "Next steps:"
