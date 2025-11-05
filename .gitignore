@@ -4,6 +4,7 @@ source/*.md
 source/*.bak
 assets/
 output/
+archive/
 *.jpg
 *.png
 
