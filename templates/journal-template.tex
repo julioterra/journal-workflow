@@ -62,7 +62,7 @@
 \usepackage{xcolor}
 \definecolor{tagcolor}{RGB}{100,149,237}      % Cornflower blue for tags
 \definecolor{namecolor}{RGB}{220,20,60}       % Crimson for names
-\definecolor{linkcolor}{RGB}{70,130,180}      % Steel blue for links
+\definecolor{linkcolor}{RGB}{70,70,120}      % Steel blue for links
 \definecolor{headingcolor}{RGB}{0,0,0}     % Black
 \definecolor{tag-default}{RGB}{100,149,237}            % Cornflower blue
 
@@ -167,6 +167,12 @@
   pdfborder={0 0 0},
   breaklinks=true
 }
+
+% Format URLs as normal text with line breaks
+\urlstyle{same}  % Use same font as surrounding text (not monospace)
+\makeatletter
+\g@addto@macro{\UrlBreaks}{\UrlOrds}  % Allow breaks at normal characters
+\makeatother
 
 % Index Generation
 \usepackage{makeidx}
