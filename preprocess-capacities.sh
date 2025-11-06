@@ -36,6 +36,8 @@ sed -i '' 's/^#ToDos$/## To Dos/' "$INPUT_FILE"
 sed -i '' 's/^#FoodJournal$/## Food Journal/' "$INPUT_FILE"
 sed -i '' 's/^#gratitude$/## Gratitude/' "$INPUT_FILE"
 sed -i '' 's/^#WorkStuff$/## Work Stuff/' "$INPUT_FILE"
+sed -i '' 's/^#ideas$/## Ideas/' "$INPUT_FILE"
+
 
 # Step 2: Uncomment image lines that reference assets
 sed -i '' 's/<!-- *\(!\[.*\](assets\/[^)]*)\) *-->/\1/g' "$INPUT_FILE"
