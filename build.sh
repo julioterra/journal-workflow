@@ -1,61 +1,75 @@
 #!/bin/bash
 
-# build.sh - Convert journal markdown to PDF using Pandoc + LaTeX
+# build.sh
+# Converts markdown to PDF using Pandoc and LaTeX with index support
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
-
-# Get the directory where this script is located
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-cd "$SCRIPT_DIR"
-
-echo -e "${GREEN}📚 Journal to PDF Converter${NC}"
-echo "================================"
-
-# Check if source file is provided
-if [ $# -eq 0 ]; then
-    echo -e "${YELLOW}Usage: ./build.sh <markdown-file>${NC}"
-    echo "Example: ./build.sh source/2025-10-21.md"
-    exit 1
-fi
+set -e
 
 INPUT_FILE="$1"
-BASENAME=$(basename "$INPUT_FILE" .md)
-OUTPUT_FILE="output/${BASENAME}.pdf"
 TEMPLATE="templates/journal-template.tex"
+OUTPUT_DIR="output"
+OUTPUT_NAME=$(basename "$INPUT_FILE" .md)
+OUTPUT_FILE="$OUTPUT_DIR/$OUTPUT_NAME.pdf"
 
-# Check if input file exists
+if [ -z "$INPUT_FILE" ]; then
+    echo "Usage: ./build.sh <input.md>"
+    exit 1
+fi
+
 if [ ! -f "$INPUT_FILE" ]; then
-    echo -e "${RED}Error: Input file '$INPUT_FILE' not found!${NC}"
+    echo "Error: File '$INPUT_FILE' not found!"
     exit 1
 fi
 
-# Check if template exists
-if [ ! -f "$TEMPLATE" ]; then
-    echo -e "${RED}Error: Template '$TEMPLATE' not found!${NC}"
-    exit 1
-fi
+rm -rf "$OUTPUT_DIR/*"             
+mkdir -p "$OUTPUT_DIR"
 
+echo "📚 Journal to PDF Converter"
+echo "================================"
 echo "📄 Input:    $INPUT_FILE"
 echo "📋 Template: $TEMPLATE"
 echo "📦 Output:   $OUTPUT_FILE"
 echo ""
-echo "🔄 Converting..."
 
-# Run Pandoc with all the filters and options
+# Step 1: Convert to .tex file
+echo "🔄 Step 1: Converting to LaTeX..."
 pandoc "$INPUT_FILE" \
   --from=markdown \
   --to=latex \
   --template="$TEMPLATE" \
   --lua-filter=filters/link-to-footnote.lua \
+  --lua-filter=filters/add-index-entries.lua \
   --lua-filter=filters/name-filter.lua \
   --lua-filter=filters/tag-filter.lua \
-  --pdf-engine=xelatex \
+  --toc \
+  --toc-depth=2 \
+  --number-sections \
   -V documentclass=book \
-  -o "$OUTPUT_FILE"
+  -V papersize=custom \
+  -V geometry:paperwidth=6in \
+  -V geometry:paperheight=9in \
+  --standalone \
+  -o "$OUTPUT_DIR/$OUTPUT_NAME.tex"
+
+# Step 2: First LaTeX pass (creates .idx)
+echo "🔄 Step 2: First LaTeX pass..."
+cd "$OUTPUT_DIR"
+xelatex -interaction=nonstopmode "$OUTPUT_NAME.tex"  Remove > /dev/null
+
+# Step 3: Build index
+echo "📇 Step 3: Building index..."
+if [ -f "$OUTPUT_NAME.idx" ]; then
+    makeindex "$OUTPUT_NAME.idx"
+fi
+
+# Step 4: Final LaTeX pass (includes index)
+echo "🔄 Step 4: Final LaTeX pass..."
+xelatex -interaction=nonstopmode "$OUTPUT_NAME.tex"  Remove > /dev/null
+cd ..
+
+echo "✅ Success! PDF created: $OUTPUT_FILE"
+echo "🔍 Opening PDF..."
+open "$OUTPUT_FILE"
 
 # Check if conversion was successful
 if [ $? -eq 0 ]; then
