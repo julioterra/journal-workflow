@@ -223,7 +223,7 @@ reference_count=0
 first_entry=true
 
 # Process all reference folders
-for folder in People Organizations Projects Books Definitions Pages; do
+for folder in People Organizations Projects Books Definitions; do
     folder_path="$EXPORT_DIR/$folder"
     
     if [ -d "$folder_path" ]; then
@@ -243,7 +243,7 @@ for folder in People Organizations Projects Books Definitions Pages; do
                     grep -E '^[ \t]*title:' | \
                     sed -E 's/^[ \t]*title:[ \t]*(.*)/\1/'
                 )
-                echo "title: $title"
+                #echo "title: $title"
                 
                 if [ -n "$title" ]; then
                     # ... (rest of the script is correct for processing and JSON formatting) ...
