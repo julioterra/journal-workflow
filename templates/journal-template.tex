@@ -1,7 +1,7 @@
 % Journal Template for Pandoc
 % Optimized for print-ready PDF output
 
-\documentclass[10pt,twoside,openany]{book}
+\documentclass[8pt,twoside,openany]{book}
 
 % ============================================================================
 % PACKAGES
@@ -11,7 +11,7 @@
 \usepackage{fontspec}
 \usepackage{microtype}
 \usepackage{xspace}
-\setmainfont{Palatino}
+\setmainfont{Corundum Text Book}
 \setsansfont{Helvetica Neue}
 \setmonofont[Scale=0.9]{Menlo}
 
@@ -39,6 +39,16 @@
   {\needspace{5\baselineskip}\normalfont\Large\bfseries\color{headingcolor}}}
 \makeatother
 
+% Paragraph spacing
+\setlength{\parskip}{0.8\baselineskip}  % Space between paragraphs
+\setlength{\parindent}{0pt}              % No paragraph indentation
+
+% Tight justification (already have microtype, but ensure settings)
+\tolerance=1
+\emergencystretch=\maxdimen
+\hyphenpenalty=10000
+\hbadness=10000
+
 % Prevent floats from crossing section boundaries
 \usepackage[section]{placeins}
 
@@ -53,7 +63,7 @@
 \definecolor{tagcolor}{RGB}{100,149,237}      % Cornflower blue for tags
 \definecolor{namecolor}{RGB}{220,20,60}       % Crimson for names
 \definecolor{linkcolor}{RGB}{70,130,180}      % Steel blue for links
-\definecolor{headingcolor}{RGB}{47,79,79}     % Dark slate gray
+\definecolor{headingcolor}{RGB}{0,0,0}     % Black
 \definecolor{tag-default}{RGB}{100,149,237}            % Cornflower blue
 
 % Headers and Footers
@@ -76,9 +86,10 @@
 \titlespacing*{\chapter}
   {0pt}{-20pt}{1.5em} % tight top/bottom spacing; tweak as you like
 % section stylling. Adjust font size and color
-  \titleformat{\section}
+\titleformat{\section}
   {\normalfont\Large\bfseries\color{headingcolor}}
   {\thesection}{1em}{}
+\titlespacing{\section}{0pt}{5pt}{5pt}
 % subsection styling. Adjust font size and color
 \titleformat{\subsection}
   {\normalfont\large\bfseries\color{headingcolor}}
