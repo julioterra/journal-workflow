@@ -168,6 +168,7 @@
   breaklinks=true
 }
 
+
 % Format URLs as normal text with line breaks
 \urlstyle{same}  % Use same font as surrounding text (not monospace)
 \makeatletter
@@ -177,9 +178,6 @@
 % Index Generation
 \usepackage{makeidx}
 \makeindex
-%\usepackage{imakeidx}
-%\makeindex[name=names,title=Index of Names]
-%\makeindex[name=tags,title=Index of Tags]
 
 % Tag command - takes display name and original name
 \makeatletter
@@ -245,16 +243,30 @@ $body$
 \backmatter
 
 % Index formatting
-\setlength{\columnsep}{2cm}  % Space between columns (adjust to taste)
+\setlength{\columnsep}{2cm}
 
-% Reduce inconsistent vertical spacing between letter groups
+% Make index entries ragged right (not justified)
 \makeatletter
-\renewcommand{\indexspace}{\vspace{0.5\baselineskip}}  % Consistent small gap
+\renewenvironment{theindex}{%
+  \if@twocolumn
+    \@restonecoltrue\onecolumn
+  \else
+    \@restonecolfalse
+  \fi
+  \columnseprule \z@
+  \columnsep 2cm
+  \twocolumn[\section*{\indexname}]%
+  \@mkboth{\MakeUppercase\indexname}{\MakeUppercase\indexname}%
+  \thispagestyle{plain}\parindent\z@
+  \parskip\z@ \@plus .3\p@\relax
+  \raggedright  % This makes entries ragged right instead of justified
+  \let\item\@idxitem
+}{%
+  \if@restonecol\onecolumn\else\clearpage\fi
+}
 \makeatother
 
 % Print indexes
-%\printindex[names]
-%\printindex[tags]
 \printindex
 
 \end{document}
