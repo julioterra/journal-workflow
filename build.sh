@@ -56,11 +56,19 @@ echo "🔄 Step 2: First LaTeX pass..."
 cd "$OUTPUT_DIR"
 xelatex -interaction=nonstopmode "$OUTPUT_NAME.tex"  Remove > /dev/null
 
+#Step 2b: Fix index entries (remove extra spaces from index entries in headings and subheadings)
+echo "🔄 Step 2b: Removing extra spaces from index entries in headings and subheadings."
+../fix-index-entries.sh "$OUTPUT_NAME.idx"
+
 # Step 3: Build index
 echo "📇 Step 3: Building index..."
 if [ -f "$OUTPUT_NAME.idx" ]; then
     makeindex "$OUTPUT_NAME.idx"
 fi
+
+#Step 3b: Make sure all categories are divided by \indexspace
+echo "🔄 Step 3b: Ensuring proper index spacing between categories."
+../fix-indexspace.sh "$OUTPUT_NAME.ind"
 
 # Step 4: Final LaTeX pass (includes index)
 echo "🔄 Step 4: Final LaTeX pass..."
