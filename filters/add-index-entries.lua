@@ -46,7 +46,7 @@ function Link(el)
     
     if ref then
       -- Create index entry: Name (Type)
-      local index_entry = string.format("%s (%s)", ref.name, ref.type)
+      local index_entry = string.format("%s@\\textbf{%s}!%s", ref.type, ref.type, ref.name)
       local index_latex = string.format("\\index{%s}", index_entry)
       
       -- Return the link text followed by invisible index entry (no mbox)

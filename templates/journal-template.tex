@@ -244,6 +244,39 @@ $body$
 % Back Matter
 \backmatter
 
+% Index formatting
+\setlength{\columnsep}{2cm}  % Space between columns (adjust to taste)
+
+% Reduce inconsistent vertical spacing between letter groups
+%\makeatletter
+%\renewcommand{\indexspace}{\vspace{0.5\baselineskip}}  % Consistent small gap
+%\makeatother
+
+% Index formatting
+\setlength{\columnsep}{2cm}
+
+% Make index entries ragged right (not justified)
+\makeatletter
+\renewenvironment{theindex}{%
+  \if@twocolumn
+    \@restonecoltrue\onecolumn
+  \else
+    \@restonecolfalse
+  \fi
+  \columnseprule \z@
+  \columnsep 2cm
+  \twocolumn[\section*{\indexname}]%
+  \@mkboth{\MakeUppercase\indexname}{\MakeUppercase\indexname}%
+  \thispagestyle{plain}\parindent\z@
+  \parskip\z@ \@plus .3\p@\relax
+  \raggedright  % This makes entries ragged right instead of justified
+  \let\item\@idxitem
+}{%
+  \if@restonecol\onecolumn\else\clearpage\fi
+}
+\makeatother
+
+
 % Print indexes
 %\printindex[names]
 %\printindex[tags]
