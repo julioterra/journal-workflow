@@ -30,12 +30,12 @@ function Pandoc(doc)
       local next = doc.blocks[i + 1]
       
       if next.t == "Para" then
-        local is_only_capacities_link = false
+        local is_capacities_link_only = false
         local link_count = 0
         local non_space = 0
         
         for _, el in ipairs(next.content) do
-          if el.t == "Link" and el.target:match("^https://app%.capacities%.io/") then
+          if el.t == "Link" and (el.target:match("^https://app%.capacities%.io/") or el.target:match("%.md$")) then
             link_count = link_count + 1
           end
           if el.t ~= "Space" and el.t ~= "SoftBreak" and el.t ~= "LineBreak" then
@@ -43,9 +43,9 @@ function Pandoc(doc)
           end
         end
         
-        is_only_capacities_link = (link_count == 1 and non_space == 1)
+        is_capacities_link_only = (link_count == 1 and non_space == 1)
         
-        if is_only_capacities_link then
+        if is_capacities_link_only then
           -- Skip the link paragraph
           table.insert(new_blocks, current)
           i = i + 2
