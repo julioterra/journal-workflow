@@ -46,7 +46,7 @@ mkdir -p "$EXPORT_DIR"
 
 # Extract zip file
 echo "  Extracting..."
-unzip -q "$ZIP_FILE" -d "$EXPORT_DIR"
+unzip -q -o -X "$ZIP_FILE" -d "$EXPORT_DIR"
 echo -e "${GREEN}  ✓ Extracted successfully${NC}"
 
 # Archive the zip file with timestamp
@@ -183,7 +183,7 @@ echo -e "${GREEN}🖼️  Step 3: Copying referenced images...${NC}"
 image_count=0
 if [ -d "$EXPORT_DIR/Images/Media" ]; then
     # Extract all image filenames referenced in the journal
-    referenced_images=$(grep -o 'Images/Media/[^)]*\.(png\|jpg\|jpeg\|gif)' "$OUTPUT_FILE" | sed 's/.*\///' | sort -u)
+    referenced_images=$(grep -oE 'Images/Media/[^)]*\.(png|jpg|jpeg|gif)' "$OUTPUT_FILE" | sed 's|.*\/||' | sort -u)
     
     if [ -z "$referenced_images" ]; then
         echo -e "${YELLOW}  ⚠ No image references found in journal${NC}"
@@ -274,6 +274,11 @@ echo "" >> "$REFERENCE_MAP"
 echo "}" >> "$REFERENCE_MAP"
 
 echo -e "${GREEN}  ✓ Mapped $reference_count references${NC}"
+
+# Clean up macOS resource forks that may have been created
+find "$EXPORT_DIR" -name "* 2" -type d -exec rm -rf {} + 2>/dev/null || true
+find "$EXPORT_DIR" -name "* 3" -type d -exec rm -rf {} + 2>/dev/null || true
+find "$EXPORT_DIR" -name "._*" -delete 2>/dev/null || true
 
 # ============================================================================
 # Summary

@@ -53,27 +53,25 @@ pandoc "$INPUT_FILE" \
 
 # Step 2: First LaTeX pass (creates .idx)
 echo "🔄 Step 2: First LaTeX pass..."
-cd "$OUTPUT_DIR"
-xelatex -interaction=nonstopmode "$OUTPUT_NAME.tex"  Remove > /dev/null
+(cd "$OUTPUT_DIR" && xelatex -interaction=nonstopmode "$OUTPUT_NAME.tex" > "$OUTPUT_NAME-build.log" 2>&1)
 
-#Step 2b: Fix index entries (remove extra spaces from index entries in headings and subheadings)
-echo "🔄 Step 2b: Removing extra spaces from index entries in headings and subheadings."
-../fix-index-entries.sh "$OUTPUT_NAME.idx"
+# Step 2b: Fix index entries
+echo "🔄 Step 2b: Removing extra spaces from index entries..."
+./fix-index-entries.sh "$OUTPUT_DIR/$OUTPUT_NAME.idx"
 
 # Step 3: Build index
 echo "📇 Step 3: Building index..."
-if [ -f "$OUTPUT_NAME.idx" ]; then
-    makeindex "$OUTPUT_NAME.idx"
+if [ -f "$OUTPUT_DIR/$OUTPUT_NAME.idx" ]; then
+    (cd "$OUTPUT_DIR" && makeindex "$OUTPUT_NAME.idx" > /dev/null 2>&1)
 fi
 
-#Step 3b: Make sure all categories are divided by \indexspace
-echo "🔄 Step 3b: Ensuring proper index spacing between categories."
-../fix-indexspace.sh "$OUTPUT_NAME.ind"
+# Step 3b: Fix index spacing
+echo "🔄 Step 3b: Ensuring proper index spacing..."
+./fix-indexspace.sh "$OUTPUT_DIR/$OUTPUT_NAME.ind" > /dev/null 2>&1
 
-# Step 4: Final LaTeX pass (includes index)
+# Step 4: Final LaTeX pass
 echo "🔄 Step 4: Final LaTeX pass..."
-xelatex -interaction=nonstopmode "$OUTPUT_NAME.tex"  Remove > /dev/null
-cd ..
+(cd "$OUTPUT_DIR" && xelatex -interaction=nonstopmode "$OUTPUT_NAME.tex" > /dev/null 2>&1)
 
 echo "✅ Success! PDF created: $OUTPUT_FILE"
 echo "🔍 Opening PDF..."

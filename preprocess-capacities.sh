@@ -42,9 +42,9 @@ sed -i '' 's/^#ideas$/## Ideas/' "$INPUT_FILE"
 # Step 2: Uncomment image lines that reference assets
 sed -i '' 's/<!-- *\(!\[.*\](assets\/[^)]*)\) *-->/\1/g' "$INPUT_FILE"
 
-# Step 2.5: Fix image paths to include assets/ prefix
-sed -i '' 's#](PDFs/#](assets/PDFs/#g' "$INPUT_FILE"
-sed -i '' 's#](Images/#](assets/Images/#g' "$INPUT_FILE"
+# Step 2.5: Image paths - graphicspath in template handles the assets/ prefix
+sed -i '' 's#](PDFs/#](PDFs/#g' "$INPUT_FILE"
+sed -i '' 's#](Images/#](Images/#g' "$INPUT_FILE"
 
 # Step 3: Find and convert PDFs
 echo "🖼️  Converting PDFs to JPG..."
