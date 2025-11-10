@@ -10,6 +10,11 @@ TEMPLATE="templates/journal-template.tex"
 OUTPUT_DIR="output"
 OUTPUT_NAME=$(basename "$INPUT_FILE" .md)
 OUTPUT_FILE="$OUTPUT_DIR/$OUTPUT_NAME.pdf"
+TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+LOG_DIR="logs"
+BUILD_LOG_FILE="$LOG_DIR/build.sh-build-$TIMESTAMP.log"
+INDEX_LOG_FILE="$LOG_DIR/build.sh-index-$TIMESTAMP.log"
+
 
 if [ -z "$INPUT_FILE" ]; then
     echo "Usage: ./build.sh <input.md>"
@@ -53,7 +58,7 @@ pandoc "$INPUT_FILE" \
 
 # Step 2: First LaTeX pass (creates .idx)
 echo "🔄 Step 2: First LaTeX pass..."
-(cd "$OUTPUT_DIR" && xelatex -interaction=nonstopmode "$OUTPUT_NAME.tex" > "$OUTPUT_NAME-build.log" 2>&1)
+(cd "$OUTPUT_DIR" && xelatex -interaction=nonstopmode "$OUTPUT_NAME.tex" > "../$BUILD_LOG_FILE" 2>&1)
 
 # Step 2b: Fix index entries
 echo "🔄 Step 2b: Removing extra spaces from index entries..."
@@ -62,7 +67,7 @@ echo "🔄 Step 2b: Removing extra spaces from index entries..."
 # Step 3: Build index
 echo "📇 Step 3: Building index..."
 if [ -f "$OUTPUT_DIR/$OUTPUT_NAME.idx" ]; then
-    (cd "$OUTPUT_DIR" && makeindex "$OUTPUT_NAME.idx" > /dev/null 2>&1)
+    (cd "$OUTPUT_DIR" && makeindex "$OUTPUT_NAME.idx" > "../$INDEX_LOG_FILE" 2>&1)
 fi
 
 # Step 3b: Fix index spacing
@@ -71,7 +76,7 @@ echo "🔄 Step 3b: Ensuring proper index spacing..."
 
 # Step 4: Final LaTeX pass
 echo "🔄 Step 4: Final LaTeX pass..."
-(cd "$OUTPUT_DIR" && xelatex -interaction=nonstopmode "$OUTPUT_NAME.tex" > /dev/null 2>&1)
+(cd "$OUTPUT_DIR" && xelatex -interaction=nonstopmode "$OUTPUT_NAME.tex" > "../$BUILD_LOG_FILE" 2>&1)
 
 echo "✅ Success! PDF created: $OUTPUT_FILE"
 echo "🔍 Opening PDF..."
