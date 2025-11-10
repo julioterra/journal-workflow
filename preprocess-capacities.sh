@@ -3,7 +3,11 @@
 # preprocess-capacities.sh
 # Converts Capacities toggle structure and handles PDF images
 
-INPUT_FILE="$1"
+# INPUT_FILE="$1"
+
+TITLE="${1:-Journal}"
+AUTHOR="${2:-Julio Terra}"
+INPUT_FILE="${3:-source/journal.md}"
 
 if [ $# -eq 0 ]; then
     echo "Usage: ./preprocess-capacities.sh <markdown-file>"
@@ -46,15 +50,46 @@ sed -i '' 's/<!-- *\(!\[.*\](assets\/[^)]*)\) *-->/\1/g' "$INPUT_FILE"
 sed -i '' 's#](PDFs/#](PDFs/#g' "$INPUT_FILE"
 sed -i '' 's#](Images/#](Images/#g' "$INPUT_FILE"
 
-# Step 2c: Remove horizontal rules (all types)
+# Step 2c: Remove old frontmatter
+echo "🗑️  Removing old frontmatter..."
+perl -0777 -i -pe 's/^---.*?---\n\n?//s' "$INPUT_FILE"
+
+# Step 2d: Remove horizontal rules (all types)
 sed -i '' '/^---$/d' "$INPUT_FILE"
 sed -i '' '/^\*\*\*$/d' "$INPUT_FILE"
 sed -i '' '/^___$/d' "$INPUT_FILE"
 
-# Step 3: Find and convert PDFs
+# Step 3: Replace frontmatter with custom metadata
+echo "📋 Step 3: Updating frontmatter..."
+
+# Extract first and last dates from top-level headings (# Date format)
+FIRST_DATE=$(grep -m 1 "^# [A-Z]" "$INPUT_FILE" | sed 's/^# //')
+LAST_DATE=$(grep "^# [A-Z]" "$INPUT_FILE" | tail -1 | sed 's/^# //')
+
+# Remove old frontmatter (from first --- to second ---, inclusive)
+sed -i '' '1{/^---$/!b};:a;/^---$/!{N;ba};d' "$INPUT_FILE"
+
+# Create new frontmatter
+cat > temp_frontmatter.md << EOF
+---
+title: $TITLE
+author: $AUTHOR
+dates: $FIRST_DATE - $LAST_DATE
+---
+
+EOF
+
+# Prepend new frontmatter
+cat temp_frontmatter.md "$INPUT_FILE" > temp_journal.md
+mv temp_journal.md "$INPUT_FILE"
+rm temp_frontmatter.md
+
+echo "  ✓ Frontmatter updated: $FIRST_DATE - $LAST_DATE"
+
+# Step 4: Find and convert PDFs
 echo "🖼️  Converting PDFs to JPG..."
 
-# Step 3: Find and convert PDFs, handle multi-page
+# Step 4: Find and convert PDFs, handle multi-page
 echo "🖼️  Converting PDFs to JPG..."
 
 # First pass: convert all PDFs
@@ -108,10 +143,10 @@ done
 
 echo "✅ Complete! Backup: ${INPUT_FILE}.bak"
 
-# Step 4: Update markdown to reference JPGs
+# Step 5: Update markdown to reference JPGs
 sed -i '' 's/\(!\[.*\](assets\/[^)]*\)\.pdf)/\1.jpg)/g' "$INPUT_FILE"
 
-# Step 5: Add blank lines before and after images for spacing
+# Step 6: Add blank lines before and after images for spacing
 sed -i '' 's/^\(!\[.*\].*\)$/\n\1\n/' "$INPUT_FILE"
 
 echo "✅ Complete! Backup: ${INPUT_FILE}.bak"
