@@ -1,6 +1,50 @@
 -- link-to-footnote.lua
 -- Remove Capacities link paragraphs after images/figures
+-- Handle video embeds and links
 
+-- Remove video embeds (they come as Figures containing Images with video targets)
+function Figure(el)
+  -- io.stderr:write("DEBUG: Processing Figure\n")
+  
+  for i, block in ipairs(el.content) do
+    if block.t == "Plain" or block.t == "Para" then
+      for j, inline in ipairs(block.content) do
+        if inline.t == "Image" then
+          local src = inline.src or ""
+          -- io.stderr:write("DEBUG: Found Image with src: " .. src .. "\n")
+          
+          if src:match("%.mp4$") or src:match("%.mov$") or src:match("%.avi$") or 
+             src:match("%.mkv$") or src:match("%.webm$") then
+            -- io.stderr:write("DEBUG: REMOVING VIDEO!\n")
+            return {}
+          end
+        end
+      end
+    end
+  end
+  
+  return el
+end
+
+-- Convert inline video links to plain text (keep text, remove link)
+function Link(el)
+  local target = el.target or ""
+  if target:match("%.mp4$") or target:match("%.mov$") or target:match("%.avi$") or 
+     target:match("%.mkv$") or target:match("%.webm$") then
+    return el.content  -- Return just the text, not the link
+  end
+  return el
+end
+
+-- Convert video links to plain text (keep the text, remove the link)
+--function VideoLink2Text(el)
+--  if el.target:match("%.(mp4|mov|avi|mkv|webm)$") then
+--    return el.content  -- Return just the text content, not the link
+--  end
+--  return el
+--end
+
+-- Remove Capacities link paragraphs following images/figures
 function Pandoc(doc)
   local new_blocks = {}
   local i = 1
@@ -67,4 +111,4 @@ function Pandoc(doc)
   return doc
 end
 
-return {{Pandoc = Pandoc}}
+return {{Figure = Figure, Link = Link, Pandoc = Pandoc}}
