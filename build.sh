@@ -42,7 +42,7 @@ pandoc "$INPUT_FILE" \
   --from=markdown \
   --to=latex \
   --template="$TEMPLATE" \
-  --lua-filter=filters/link-to-footnote.lua \
+  --lua-filter=filters/filter-media-links.lua \
   --lua-filter=filters/add-index-entries.lua \
   --lua-filter=filters/name-filter.lua \
   --lua-filter=filters/tag-filter.lua \
