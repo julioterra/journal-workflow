@@ -279,12 +279,66 @@ $body$
 }
 \makeatother
 
-% Print all indexes
-\printindex[people]
-\printindex[organizations]
-\printindex[projects]
-\printindex[definitions]
-\printindex[books]
-\printindex[tags]
+% Manually combine all indexes into one continuous section
+\makeatletter
+\if@twocolumn
+  \@restonecoltrue\onecolumn
+\else
+  \@restonecolfalse
+\fi
+\columnseprule \z@
+\columnsep 2cm
+\twocolumn[\section*{Indexes}]%
+\@mkboth{INDEXES}{INDEXES}%
+\thispagestyle{plain}\parindent\z@
+\parskip\z@ \@plus .3\p@\relax
+\raggedright
+\let\item\@idxitem
+
+% Temporarily disable theindex environment so we can include .ind files
+\let\oldtheindex\theindex
+\let\oldendtheindex\endtheindex
+\renewenvironment{theindex}{}{}
+
+% People
+\subsection*{People}
+\InputIfFileExists{people.ind}{}{}
+
+\vspace{2\baselineskip}
+
+% Organizations
+\subsection*{Organizations}
+\InputIfFileExists{organizations.ind}{}{}
+
+\vspace{2\baselineskip}
+
+% Projects
+\subsection*{Projects}
+\InputIfFileExists{projects.ind}{}{}
+
+\vspace{2\baselineskip}
+
+% Definitions
+\subsection*{Definitions}
+\InputIfFileExists{definitions.ind}{}{}
+
+\vspace{2\baselineskip}
+
+% Books
+\subsection*{Books}
+\InputIfFileExists{books.ind}{}{}
+
+\vspace{2\baselineskip}
+
+% Tags
+\subsection*{Tags}
+\InputIfFileExists{tags.ind}{}{}
+
+% Restore theindex environment
+\let\theindex\oldtheindex
+\let\endtheindex\oldendtheindex
+
+\if@restonecol\onecolumn\fi
+\makeatother
 
 \end{document}
