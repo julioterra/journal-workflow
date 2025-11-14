@@ -45,9 +45,9 @@ function Link(el)
     local ref = references[decoded_target]
     
     if ref then
-      -- Create index entry: Name (Type)
-      local index_entry = string.format("%s@\\textbf{%s}!%s", ref.type, ref.type, ref.name)
-      local index_latex = string.format("\\index{%s}", index_entry)
+      -- Route to type-specific index (e.g., People → people index)
+      local index_name = ref.type:lower()
+      local index_latex = string.format("\\index[%s]{%s}", index_name, ref.name)
       
       -- Return the link text followed by invisible index entry (no mbox)
       return {

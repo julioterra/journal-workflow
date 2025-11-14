@@ -181,9 +181,14 @@
 \g@addto@macro{\UrlBreaks}{\UrlOrds}  % Allow breaks at normal characters
 \makeatother
 
-% Index Generation
-\usepackage{makeidx}
-\makeindex
+% Index Generation - Separate index for each type
+\usepackage{imakeidx}
+\makeindex[name=people,title=People,columns=2]
+\makeindex[name=organizations,title=Organizations,columns=2]
+\makeindex[name=projects,title=Projects,columns=2]
+\makeindex[name=definitions,title=Definitions,columns=2]
+\makeindex[name=books,title=Books,columns=2]
+\makeindex[name=tags,title=Tags,columns=2]
 
 % Tag command - takes display name and original name
 \makeatletter
@@ -193,6 +198,8 @@
   }{%
     \textcolor{tag-#2}{\textbf{\#{}#1}}%
   }%
+  \index[tags]{#1}%
+  \xspace%
 }
 \makeatother
 
@@ -272,7 +279,12 @@ $body$
 }
 \makeatother
 
-% Print indexes
-\printindex
+% Print all indexes
+\printindex[people]
+\printindex[organizations]
+\printindex[projects]
+\printindex[definitions]
+\printindex[books]
+\printindex[tags]
 
 \end{document}

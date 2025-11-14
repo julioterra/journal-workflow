@@ -12,8 +12,8 @@ OUTPUT_NAME=$(basename "$INPUT_FILE" .md)
 OUTPUT_FILE="$OUTPUT_DIR/$OUTPUT_NAME.pdf"
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)
 LOG_DIR="logs"
-BUILD_LOG_FILE="$LOG_DIR/build.sh-build-$TIMESTAMP.log"
-INDEX_LOG_FILE="$LOG_DIR/build.sh-index-$TIMESTAMP.log"
+BUILD_LOG_FILE="$LOG_DIR/build.sh-build.log"
+INDEX_LOG_FILE="$LOG_DIR/build.sh-index.log"
 
 
 if [ -z "$INPUT_FILE" ]; then
@@ -60,19 +60,11 @@ pandoc "$INPUT_FILE" \
 echo "🔄 Step 2: First LaTeX pass..."
 (cd "$OUTPUT_DIR" && xelatex -interaction=nonstopmode "$OUTPUT_NAME.tex" > "../$BUILD_LOG_FILE" 2>&1)
 
-# Step 2b: Fix index entries
-echo "🔄 Step 2b: Removing extra spaces from index entries..."
-./fix-index-entries.sh "$OUTPUT_DIR/$OUTPUT_NAME.idx"
-
 # Step 3: Build index
 echo "📇 Step 3: Building index..."
 if [ -f "$OUTPUT_DIR/$OUTPUT_NAME.idx" ]; then
     (cd "$OUTPUT_DIR" && makeindex "$OUTPUT_NAME.idx" > "../$INDEX_LOG_FILE" 2>&1)
 fi
-
-# Step 3b: Fix index spacing
-echo "🔄 Step 3b: Ensuring proper index spacing..."
-./fix-indexspace.sh "$OUTPUT_DIR/$OUTPUT_NAME.ind" > /dev/null 2>&1
 
 # Step 4: Final LaTeX pass
 echo "🔄 Step 4: Final LaTeX pass..."
