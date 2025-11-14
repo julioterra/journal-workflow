@@ -42,6 +42,9 @@ sed -i '' 's/^#gratitude$/## Gratitude/' "$INPUT_FILE"
 sed -i '' 's/^#WorkStuff$/## Work Stuff/' "$INPUT_FILE"
 sed -i '' 's/^#ideas$/## Ideas/' "$INPUT_FILE"
 
+# Step 1c: Remove mentions from headings to avoid index issues
+echo "🔧 Removing mentions from headings..."
+sed -i '' -E 's/^(#+.*)\[([^]]+)\]\([^)]+\)/\1\2/g' "$INPUT_FILE"
 
 # Step 2: Uncomment image lines that reference assets
 sed -i '' 's/<!-- *\(!\[.*\](assets\/[^)]*)\) *-->/\1/g' "$INPUT_FILE"
