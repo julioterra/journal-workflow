@@ -171,7 +171,8 @@
   filecolor=linkcolor,
   urlcolor=linkcolor,
   pdfborder={0 0 0},
-  breaklinks=true
+  breaklinks=true,
+  hyperindex=true
 }
 
 
@@ -279,6 +280,16 @@ $body$
 }
 \makeatother
 
+% Ensure index starts on a fresh spread (right page with blank left page)
+\clearpage
+\ifodd\value{page}
+  % On odd (right) page: add blank even, then blank odd to start fresh spread
+  \thispagestyle{empty}\hbox{}\clearpage\thispagestyle{empty}\hbox{}\clearpage
+\else
+  % On even (left) page: add blank odd, then blank even, then odd for index
+  \thispagestyle{empty}\hbox{}\clearpage\thispagestyle{empty}\hbox{}\clearpage\thispagestyle{empty}\hbox{}\clearpage
+\fi
+
 % Manually combine all indexes into one continuous section
 \makeatletter
 \if@twocolumn
@@ -288,8 +299,8 @@ $body$
 \fi
 \columnseprule \z@
 \columnsep 2cm
-\twocolumn[\section*{Indexes}]%
-\@mkboth{INDEXES}{INDEXES}%
+\twocolumn[\section*{Indexes}\vspace{4\baselineskip}]%
+\@mkboth{Indexes}{Indexes}%
 \thispagestyle{plain}\parindent\z@
 \parskip\z@ \@plus .3\p@\relax
 \raggedright
@@ -299,40 +310,33 @@ $body$
 \let\oldtheindex\theindex
 \let\oldendtheindex\endtheindex
 \renewenvironment{theindex}{}{}
+% Remove extra spacing between alphabetical groups
+\renewcommand{\indexspace}{}
 
-% People
-\subsection*{People}
-\InputIfFileExists{people.ind}{}{}
+% Helper command to only print index section if it has content
+\newif\ifhasitems
+\newcommand{\printindexsection}[2]{%
+  % First pass: check if file has \item commands
+  \hasitemsfalse
+  \let\olditemcheck\item
+  \def\item{\global\hasitemstrue\olditemcheck}%
+  \setbox0=\vbox{\InputIfFileExists{#2.ind}{}{}}%
+  \let\item\olditemcheck
+  % Second pass: if it has items, actually print it
+  \ifhasitems
+    \subsection*{#1}%
+    \InputIfFileExists{#2.ind}{}{}%
+    \vspace{2\baselineskip}%
+  \fi
+}
 
-\vspace{2\baselineskip}
-
-% Organizations
-\subsection*{Organizations}
-\InputIfFileExists{organizations.ind}{}{}
-
-\vspace{2\baselineskip}
-
-% Projects
-\subsection*{Projects}
-\InputIfFileExists{projects.ind}{}{}
-
-\vspace{2\baselineskip}
-
-% Definitions
-\subsection*{Definitions}
-\InputIfFileExists{definitions.ind}{}{}
-
-\vspace{2\baselineskip}
-
-% Books
-\subsection*{Books}
-\InputIfFileExists{books.ind}{}{}
-
-\vspace{2\baselineskip}
-
-% Tags
-\subsection*{Tags}
-\InputIfFileExists{tags.ind}{}{}
+% Print each index section (only if non-empty, in alphabetical order)
+\printindexsection{Books}{books}
+\printindexsection{Definitions}{definitions}
+\printindexsection{Organizations}{organizations}
+\printindexsection{People}{people}
+\printindexsection{Projects}{projects}
+\printindexsection{Tags}{tags}
 
 % Restore theindex environment
 \let\theindex\oldtheindex
