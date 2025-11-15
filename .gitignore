@@ -2,6 +2,7 @@
 # Track directories but ignore their contents
 source/*
 !source/.gitkeep
+!source/test.md
 assets/*
 !assets/.gitkeep
 output/*

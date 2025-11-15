@@ -4,6 +4,14 @@ Common commands and tasks for your journal workflow.
 
 ## 📝 Basic Workflow
 
+### Test Your Installation
+```bash
+# Build the included test file to verify everything works
+./build.sh source/test.md
+```
+
+The test file exercises all 5 filters and generates entries in all 6 indexes.
+
 ### Build from Journal Markdown
 ```bash
 # Clean build (clears output directory first)

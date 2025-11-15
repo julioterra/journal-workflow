@@ -134,6 +134,29 @@ xelatex --version
 
 If anything fails, see `INSTALL.md` troubleshooting section.
 
+### Test Your Installation
+
+Once everything is installed, test the workflow with the included test file:
+
+```bash
+cd ~/Documents/journal-workflow
+./build.sh source/test.md
+```
+
+**What to look for in the test PDF:**
+- **Tags in blue**: #testing, #workflow, #setup, #success, #installation, #verification
+- **Object references indexed**: Check the 6 indexes at the back
+  - Books: "Thinking Fast and Slow"
+  - Definitions: "Cognitive Bias"
+  - Organizations: "Stanford University"
+  - People: "Sarah Johnson"
+  - Projects: "Journal Workflow"
+  - Tags: All hashtags from the document
+- **Professional layout**: Margins, headers, page numbers
+- **PDF opens automatically** after build
+
+If the test PDF looks good, your installation is working correctly!
+
 ---
 
 ## 🎉 Your First Build

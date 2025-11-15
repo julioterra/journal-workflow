@@ -39,6 +39,21 @@ journal-workflow/
 
 ## 🚀 Quick Start
 
+### 0. Test Your Installation
+
+Verify everything is working with the included test file:
+
+```bash
+./build.sh source/test.md
+```
+
+The test PDF should show:
+- Tags in **blue** color (#testing, #workflow, etc.)
+- Object references indexed in all 6 indexes
+- Professional book layout
+
+If the test works, you're ready to build your own journal!
+
 ### 1. Build Your Journal
 
 ```bash
