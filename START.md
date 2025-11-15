@@ -13,7 +13,7 @@ Welcome! Let's get you from zero to your first beautiful journal PDF in under an
 
 Here's what we're building:
 
-**Your Goal**: Convert markdown journal entries → Beautiful print-ready PDF
+**Your Goal**: Convert Capacities journal exports OR markdown files → Beautiful print-ready PDF
 
 **The Journey**:
 1. Install software (30 min)
@@ -33,11 +33,21 @@ These files are your guides:
 
 ## ⚡ Quick Start (If You're Impatient)
 
-Already have everything installed? Jump right in:
+Already have everything installed? Choose your path:
 
+### Option A: Build from Existing Markdown
 ```bash
 cd journal-workflow
-./build-clean.sh source/2025-10-21.md
+./build.sh source/journal.md
+```
+
+### Option B: Process Capacities Export
+```bash
+cd journal-workflow
+# Place your Capacities export .zip in source/
+./process-capacities-export.sh
+./preprocess-capacities.sh "My Journal" "Your Name" source/journal.md
+./build.sh source/journal.md
 ```
 
 The PDF will open automatically! 🎉
@@ -85,14 +95,14 @@ brew install pandoc
 
 ⏱️ Quick - just a few minutes.
 
-### Step 5: Set Up VS Code
+### Step 5: Set Up VS Code (Optional)
 
 1. Open VS Code (drag to Applications if you haven't)
 2. Press `Cmd+Shift+P`
 3. Type: `shell command`
 4. Select: "Shell Command: Install 'code' command in PATH"
 
-### Step 6: Install VS Code Extensions
+### Step 6: Install VS Code Extensions (Optional)
 
 Press `Cmd+Shift+X` in VS Code and install:
 - **LaTeX Workshop** (essential!)
@@ -120,7 +130,6 @@ brew --version
 pandoc --version
 pdflatex --version
 xelatex --version
-code --version
 ```
 
 If anything fails, see `INSTALL.md` troubleshooting section.
@@ -131,32 +140,62 @@ If anything fails, see `INSTALL.md` troubleshooting section.
 
 Time to see the magic!
 
-### Option 1: Command Line (Easiest)
+### Option 1: Build from Markdown (Simplest)
+
+If you already have a journal.md file:
 
 ```bash
 cd ~/Documents/journal-workflow
-./build-clean.sh source/2025-10-21.md
+./build.sh source/journal.md
 ```
 
 **What happens:**
-1. Script fixes any character encoding issues
-2. Pandoc converts markdown → LaTeX
-3. Filters add color to tags and names
-4. XeLaTeX generates the PDF
-5. PDF opens automatically!
+1. Output directory is cleaned (prevents stale files)
+2. Pandoc converts markdown → LaTeX using 5 filters
+3. First XeLaTeX pass creates index files
+4. makeindex processes all 6 indexes
+5. Final XeLaTeX pass includes formatted indexes
+6. PDF opens automatically!
 
-### Option 2: VS Code (Visual)
+### Option 2: Process Capacities Export (Full Workflow)
+
+If you're importing from Capacities:
+
+1. **Export from Capacities** and save the .zip file to `source/`
+
+2. **Process the export:**
+   ```bash
+   cd ~/Documents/journal-workflow
+   ./process-capacities-export.sh
+   ```
+
+3. **Preprocess for LaTeX:**
+   ```bash
+   ./preprocess-capacities.sh "My 2023 Journal" "Your Name" source/journal.md
+   ```
+
+4. **Build the PDF:**
+   ```bash
+   ./build.sh source/journal.md
+   ```
+
+5. **Review your PDF:**
+   ```bash
+   open output/journal.pdf
+   ```
+
+### Option 3: VS Code (Visual)
 
 1. Open the workflow folder in VS Code:
    ```bash
    code ~/Documents/journal-workflow
    ```
 
-2. Open `source/2025-10-21.md`
+2. Open `source/journal.md` (or your file)
 
-3. In Terminal (inside VS Code): `Ctrl+` `
+3. In Terminal (inside VS Code): `Ctrl+` ` then:
    ```bash
-   ./build-clean.sh source/2025-10-21.md
+   ./build.sh source/journal.md
    ```
 
 ---
@@ -168,14 +207,14 @@ Open your PDF and check:
 ### ✅ Success Indicators
 
 - **Tags are blue**: Look for #PersonalJournal, #parenting, etc.
-- **Names are red**: Andrea, Rose, Luca, Mila should be highlighted
+- **Names are red**: People's names should be highlighted
 - **Professional layout**: Clean margins, headers, page numbers
-- **Indexes at back**: Two indexes - one for names, one for tags
-- **Readable font**: Palatino is elegant and readable
+- **Six indexes at back**: Books, Definitions, Organizations, People, Projects, Tags
+- **Readable font**: Corundum Text Book (or substitute if you changed it)
 
 ### 📏 Check the Size
 
-- Physical dimensions: Should feel like a normal book
+- Physical dimensions: 6" × 9" (standard trade paperback)
 - On screen: Zoom to 100% - is text readable?
 - Print test: Print one page to verify size
 
@@ -187,7 +226,7 @@ Want to make it yours right away?
 
 ### Change Tag Color
 
-Edit `templates/journal-template.tex`:
+Edit `templates/journal-template.tex` (line ~65):
 
 ```latex
 \definecolor{tagcolor}{RGB}{100,149,237}  % Change these numbers!
@@ -202,6 +241,31 @@ Try:
 
 ```latex
 \definecolor{namecolor}{RGB}{220,20,60}  % Change these numbers!
+```
+
+### Change Font
+
+Edit `templates/journal-template.tex` (line ~14):
+
+```latex
+\setmainfont{Corundum Text Book}[
+  BoldFont={Corundum Text Bold}
+]
+```
+
+**Don't have Corundum Text Book?** Try these alternatives:
+
+```latex
+\setmainfont{Palatino}      % Classic serif
+\setmainfont{Garamond}      % Elegant serif
+\setmainfont{Baskerville}   % Traditional serif
+\setmainfont{Georgia}       % Screen-friendly
+\setmainfont{Hoefler Text}  % macOS default
+```
+
+**Check available fonts:**
+```bash
+fc-list : family | sort | uniq
 ```
 
 ### Add Your Friends/Family
@@ -231,16 +295,18 @@ Now that you have a working PDF:
 ### Step 1: Review the Output (5 min)
 - Look at every page
 - Check if formatting looks good
+- Verify all 6 indexes appear
 - Note what you'd like to change
 
 ### Step 2: Read the Docs (15 min)
-- Skim through `README.md`
-- Bookmark `QUICKREF.md`
-- Understand the basics from `PROJECT.md`
+- Skim through `README.md` for complete features
+- Bookmark `QUICKREF.md` for command reference
+- Understand the architecture from `PROJECT.md`
 
 ### Step 3: Add Your Content (10 min)
-- Copy one of your journal entries to `source/`
-- Build it: `./build-clean.sh source/your-file.md`
+- If using Capacities, export and process your data
+- If using markdown, copy your files to `source/`
+- Build: `./build.sh source/your-file.md`
 - See how your content looks
 
 ### Step 4: Customize (Ongoing)
@@ -248,11 +314,13 @@ Now that you have a working PDF:
 - Try different fonts
 - Adjust layout
 - Add names to the filter
+- Customize index categories
 
 ### Step 5: Plan Your Book (Thinking time)
 - How do you want to organize entries?
 - By day? By month? By year?
 - What additional features do you need?
+- Which indexes are most useful to you?
 
 ---
 
@@ -274,7 +342,17 @@ eval "$(/usr/libexec/path_helper)"
 ### "Permission denied: ./build.sh"
 **Fix**: Make scripts executable
 ```bash
-chmod +x build.sh build-clean.sh preprocess.sh
+chmod +x *.sh
+```
+
+### "Font not found" error
+**Fix**: Change the font in the template
+```bash
+# Check available fonts
+fc-list : family | sort | uniq
+
+# Then edit templates/journal-template.tex
+# Change \setmainfont{Corundum Text Book} to an available font
 ```
 
 ### PDF looks weird
@@ -288,7 +366,7 @@ chmod +x build.sh build-clean.sh preprocess.sh
 **Check**:
 - Are tags formatted as `#tag` (no space)?
 - Did the build complete without errors?
-- Look at the `.log` file in output/
+- Look at `logs/build.sh-build.log`
 
 ### Names aren't colored
 **Check**:
@@ -296,38 +374,60 @@ chmod +x build.sh build-clean.sh preprocess.sh
 - Add it to `filters/name-filter.lua`
 - Rebuild after adding
 
+### Indexes are missing
+**Check**:
+- Look at `logs/build.sh-index.log` for errors
+- Verify `.idx` files exist in `output/`
+- Verify `.ind` files exist in `output/`
+- Check that build.sh processes all 6 indexes
+
+### Build works but output looks wrong
+**Fix**: Clean build (output directory gets stale)
+```bash
+# Output is cleaned automatically now, but you can check:
+ls output/
+# Should see fresh .idx and .ind files after each build
+```
+
 ---
 
 ## 💡 Pro Tips for Beginners
 
 1. **Always test with small files first** - Don't try your entire journal on the first run!
 
-2. **Keep a backup** - The preprocess script creates .bak files automatically
+2. **Keep backups** - Preprocessing creates .bak files automatically
 
 3. **Make one change at a time** - Easier to debug if something breaks
 
-4. **Check the logs** - When builds fail, the .log file tells you why
+4. **Check the logs** - When builds fail, logs/ directory tells you why
 
 5. **Start simple** - Get the basic workflow working before heavy customization
 
-6. **Use version control** - Consider `git init` to track your template changes
+6. **Use version control** - Consider git for tracking template changes
 
 7. **Print a test page** - Before printing a whole book, print one page at actual size
+
+8. **Clean builds are safe** - build.sh cleans output/ by default (use --keep-output sparingly)
+
+9. **Verify all indexes** - Check that all 6 indexes appear in your PDF
+
+10. **Font troubleshooting** - If you see font errors, use fc-list to find alternatives
 
 ---
 
 ## 🎯 Your First Hour Checklist
 
-- [ ] Install all required software
+- [ ] Install all required software (Homebrew, Pandoc, MacTeX)
 - [ ] Verify installations work
-- [ ] Build the sample PDF successfully
+- [ ] Build a sample PDF successfully
 - [ ] Open and review the PDF
+- [ ] Verify all 6 indexes appear
 - [ ] Try one color customization
 - [ ] Add one person's name to the filter
 - [ ] Rebuild and see the changes
 - [ ] Read through README.md
-- [ ] Add one of your own journal entries
-- [ ] Build your own content successfully
+- [ ] Process your own content (Capacities export or markdown)
+- [ ] Build your own journal successfully
 
 ---
 
@@ -338,14 +438,18 @@ If you've made it here and have a working PDF, **congratulations!** 🎉
 You now have:
 - ✅ A complete, working workflow
 - ✅ Your first journal PDF
+- ✅ Six comprehensive indexes
+- ✅ Five powerful filters processing your content
 - ✅ The knowledge to customize it
 - ✅ All the tools you need
 
 **What's Next?**
-- Read `README.md` for detailed usage
-- Explore `PROJECT.md` to understand the system
-- Use `QUICKREF.md` as your command reference
-- Start building your actual journal!
+- Read `README.md` for detailed features and customization
+- Explore `PROJECT.md` to understand the system architecture
+- Use `QUICKREF.md` as your daily command reference
+- Process your full Capacities export or markdown journal
+- Customize fonts, colors, and layout to your taste
+- Print your beautiful journal!
 
 ---
 
@@ -353,17 +457,21 @@ You now have:
 
 **First:**
 1. Check the error message carefully
-2. Look in `INSTALL.md` troubleshooting
-3. Review `QUICKREF.md` for commands
-4. Check the `.log` files in output/
+2. Look in `INSTALL.md` troubleshooting section
+3. Review `QUICKREF.md` for command syntax
+4. Check the log files in `logs/` directory
+5. Verify all 6 .ind files exist in `output/`
 
 **Remember:**
 - Installation is the hardest part - once it's working, it's smooth sailing!
-- Most issues are simple fixes (permissions, PATH, missing packages)
-- The sample file is your testing ground - use it to experiment!
+- Most issues are simple fixes (permissions, PATH, missing packages, fonts)
+- The sample files are your testing ground - use them to experiment!
+- Clean builds prevent many issues - output/ is cleaned automatically
 
 ---
 
 **Ready to create beautiful journals?** 📚✨
 
-Start with: `./build-clean.sh source/2025-10-21.md`
+Quick start: `./build.sh source/journal.md`
+
+Capacities workflow: `./process-capacities-export.sh` → `./preprocess-capacities.sh` → `./build.sh source/journal.md`
