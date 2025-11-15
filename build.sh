@@ -5,7 +5,23 @@
 
 set -e
 
-INPUT_FILE="$1"
+# Parse arguments
+KEEP_OUTPUT=false
+INPUT_FILE=""
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --keep-output)
+            KEEP_OUTPUT=true
+            shift
+            ;;
+        *)
+            INPUT_FILE="$1"
+            shift
+            ;;
+    esac
+done
+
 TEMPLATE="templates/journal-template.tex"
 OUTPUT_DIR="output"
 OUTPUT_NAME=$(basename "$INPUT_FILE" .md)
@@ -17,7 +33,8 @@ INDEX_LOG_FILE="$LOG_DIR/build.sh-index.log"
 
 
 if [ -z "$INPUT_FILE" ]; then
-    echo "Usage: ./build.sh <input.md>"
+    echo "Usage: ./build.sh <input.md> [--keep-output]"
+    echo "  --keep-output: Preserve existing files in output directory"
     exit 1
 fi
 
@@ -26,8 +43,12 @@ if [ ! -f "$INPUT_FILE" ]; then
     exit 1
 fi
 
-rm -rf "$OUTPUT_DIR/*"             
+# Clean output directory unless --keep-output flag is set
 mkdir -p "$OUTPUT_DIR"
+if [ "$KEEP_OUTPUT" = false ]; then
+    echo "🧹 Cleaning output directory..."
+    rm -rf "$OUTPUT_DIR"/*
+fi
 
 echo "📚 Journal to PDF Converter"
 echo "================================"
@@ -60,11 +81,15 @@ pandoc "$INPUT_FILE" \
 echo "🔄 Step 2: First LaTeX pass..."
 (cd "$OUTPUT_DIR" && xelatex -interaction=nonstopmode "$OUTPUT_NAME.tex" > "../$BUILD_LOG_FILE" 2>&1)
 
-# Step 3: Build index
-echo "📇 Step 3: Building index..."
-if [ -f "$OUTPUT_DIR/$OUTPUT_NAME.idx" ]; then
-    (cd "$OUTPUT_DIR" && makeindex "$OUTPUT_NAME.idx" > "../$INDEX_LOG_FILE" 2>&1)
-fi
+# Step 3: Build all indexes
+echo "📇 Step 3: Building indexes..."
+(cd "$OUTPUT_DIR" && {
+    for idx in people organizations projects definitions books tags; do
+        if [ -f "${idx}.idx" ]; then
+            makeindex "${idx}.idx" >> "../$INDEX_LOG_FILE" 2>&1
+        fi
+    done
+})
 
 # Step 4: Final LaTeX pass
 echo "🔄 Step 4: Final LaTeX pass..."
