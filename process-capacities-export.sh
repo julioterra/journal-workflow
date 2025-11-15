@@ -40,9 +40,10 @@ echo "  Found: $(basename "$ZIP_FILE")"
 # Clear and recreate export directory
 if [ -d "$EXPORT_DIR" ]; then
     echo "  Clearing old export directory..."
-    rm -rf "$EXPORT_DIR"
+    rm -rf "$EXPORT_DIR"/*
+    else
+    mkdir -p "$EXPORT_DIR"
 fi
-mkdir -p "$EXPORT_DIR"
 
 # Extract zip file
 echo "  Extracting..."
