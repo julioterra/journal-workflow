@@ -1,0 +1,86 @@
+-- remove-object-embeds.lua
+-- Remove standalone embed links to object .md files (currently: Pages/*.md)
+
+-- Helper function to URL decode a string
+local function url_decode(str)
+  if not str then return str end
+  str = str:gsub("+", " ")
+  str = str:gsub("%%(%x%x)", function(h)
+    return string.char(tonumber(h, 16))
+  end)
+  return str
+end
+
+-- Helper function to read title from a .md file's frontmatter
+local function get_title_from_file(filepath)
+  local file = io.open(filepath, "r")
+  if not file then return nil end
+
+  local content = file:read("*all")
+  file:close()
+
+  -- Look for YAML frontmatter
+  local frontmatter = content:match("^%-%-%-\n(.-)%-%-%-")
+  if not frontmatter then return nil end
+
+  -- Extract title from frontmatter
+  local title = frontmatter:match("title:%s*['\"]?([^'\"\n]+)['\"]?")
+  if title then
+    -- Trim trailing whitespace
+    title = title:gsub("%s+$", "")
+  end
+
+  return title
+end
+
+-- Helper function to get filename without extension
+local function get_filename_without_ext(path)
+  local filename = path:match("([^/]+)%.md$")
+  return filename and url_decode(filename) or nil
+end
+
+-- Process paragraphs to remove standalone Pages embeds
+function Para(el)
+  -- Check if paragraph contains only a single link (and maybe whitespace)
+  local link = nil
+  local non_space_count = 0
+
+  for _, inline in ipairs(el.content) do
+    if inline.t == "Link" then
+      link = inline
+      non_space_count = non_space_count + 1
+    elseif inline.t ~= "Space" and inline.t ~= "SoftBreak" and inline.t ~= "LineBreak" then
+      non_space_count = non_space_count + 1
+    end
+  end
+
+  -- Only process if we have exactly one non-space element and it's a link
+  if non_space_count == 1 and link then
+    local target = link.target or ""
+
+    -- Check if it's a Pages/*.md link
+    if target:match("^Pages/.*%.md$") then
+      -- Get the link text
+      local link_text = pandoc.utils.stringify(link.content)
+
+      -- Construct the full file path (relative to source directory)
+      local filepath = "source/capacities-export/" .. url_decode(target)
+
+      -- Get title from the file
+      local title = get_title_from_file(filepath)
+
+      -- Get filename without extension
+      local filename = get_filename_without_ext(target)
+
+      -- Check if link text matches title or filename
+      if (title and link_text == title) or (filename and link_text == filename) then
+        -- Remove this paragraph by returning an empty list
+        return {}
+      end
+    end
+  end
+
+  return el
+end
+
+return {{Para = Para}}
