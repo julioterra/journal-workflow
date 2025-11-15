@@ -1,10 +1,15 @@
 # Private content - DO NOT COMMIT
-source/
-source/*.md
-source/*.bak
-assets/
-output/
-archive/
+# Track directories but ignore their contents
+source/*
+!source/.gitkeep
+assets/*
+!assets/.gitkeep
+output/*
+!output/.gitkeep
+archive/*
+!archive/.gitkeep
+
+# Additional source file patterns
 *.jpg
 *.png
 
