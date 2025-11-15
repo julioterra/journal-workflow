@@ -14,29 +14,35 @@ journal-workflow/
 │   └── PROJECT.md         # This file
 │
 ├── 🔨 Build Scripts
-│   ├── build.sh           # Main build script
-│   ├── build-clean.sh     # Build with preprocessing
-│   └── preprocess.sh      # Fix character encoding
+│   ├── build.sh                      # Main build script
+│   ├── build-clean.sh                # Build with preprocessing
+│   ├── preprocess.sh                 # Fix character encoding
+│   ├── preprocess-capacities.sh      # Capacities-specific preprocessing
+│   └── process-capacities-export.sh  # Extract and process exports
 │
 ├── 📁 Working Directories
 │   ├── source/            # Put your markdown files here
-│   │   └── 2025-10-21.md  # Sample file (your content)
-│   ├── output/            # PDFs appear here
+│   │   ├── journal.md             # Combined journal (generated)
+│   │   └── capacities-export/     # Extracted Capacities data
+│   ├── output/            # PDFs appear here (cleaned on build)
 │   ├── templates/         # LaTeX templates
 │   │   └── journal-template.tex
 │   ├── filters/           # Lua filters for processing
-│   │   ├── tag-filter.lua
-│   │   └── name-filter.lua
-│   └── assets/            # Images, fonts, etc.
+│   │   ├── filter-media-links.lua
+│   │   ├── remove-object-embeds.lua
+│   │   ├── add-index-entries.lua
+│   │   ├── name-filter.lua
+│   │   └── tag-filter.lua
+│   ├── assets/            # Images, PDFs, fonts
+│   └── logs/              # Build logs
 │
 ├── ⚙️ Configuration
 │   ├── .vscode/
 │   │   └── settings.json  # VS Code settings
-│   ├── .gitignore         # Git ignore rules
-│   └── config/            # Future config files
+│   └── .gitignore         # Git ignore rules
 │
 └── 🎯 Sample Content
-    └── source/2025-10-21.md  # Your sample journal entry
+    └── source/capacities-export/  # Your extracted Capacities data
 ```
 
 ## Key Components Explained
@@ -45,121 +51,226 @@ journal-workflow/
 - **Purpose**: Defines the look and feel of your PDF
 - **What it does**:
   - Sets page size (6" × 9" book format)
-  - Defines fonts (Palatino for body text)
-  - Creates custom commands for tags and names
-  - Sets up indexes
+  - Defines fonts (Corundum Text Book for body text)
+  - Creates custom commands for tags, names, and index entries
+  - Sets up 6 separate indexes using imakeidx
   - Defines colors, margins, headers, footers
-- **Customizable**: Yes! Change colors, fonts, layout
+- **Customizable**: Yes! Change colors, fonts, layout, add new indexes
 
-### 🏷️ Tag Filter (`tag-filter.lua`)
-- **Purpose**: Process hashtags in your markdown
+### 🎬 Filter Pipeline (5 Lua Filters)
+
+#### 1. filter-media-links.lua
+- **Purpose**: Clean up media links from Capacities
 - **What it does**:
-  - Finds all `#tags` in your text
-  - Converts them to LaTeX `\tag{}` commands
-  - Makes them appear colored in the PDF
-  - Adds them to the tag index
-- **Example**: `#PersonalJournal` → Blue, indexed tag
+  - Removes Capacities metadata links after images
+  - Filters out video embeds (they don't work in PDFs)
+  - Converts video links to plain text
+- **Processing order**: First
 
-### 👤 Name Filter (`name-filter.lua`)
+#### 2. remove-object-embeds.lua
+- **Purpose**: Remove standalone embedded objects
+- **What it does**:
+  - Finds paragraphs with only a link to Pages/*.md
+  - Reads the linked file's frontmatter
+  - Removes if link text matches file title
+  - Preserves inline references
+- **Processing order**: Second
+- **Expandable**: Can add other object types beyond Pages
+
+#### 3. add-index-entries.lua
+- **Purpose**: Route references to appropriate indexes
+- **What it does**:
+  - Reads Capacities object metadata (type, title)
+  - Routes to correct index: Books, Definitions, Organizations, People, Projects
+  - Generates LaTeX `\index[category]{entry}` commands
+- **Processing order**: Third
+
+#### 4. name-filter.lua
 - **Purpose**: Extract and highlight people's names
 - **What it does**:
   - Finds Capacities person links: `[Andrea](https://app...)`
   - Converts to LaTeX `\person{}` commands
-  - Makes names appear colored in PDF
-  - Adds them to the names index
-  - Requires names to be in a recognition list
-- **Customizable**: Add your frequent contacts to the list
+  - Makes names appear colored in red
+  - Adds to People index
+  - Only processes names in recognition list
+- **Customizable**: Add your contacts to `common_names` table
+- **Processing order**: Fourth
+
+#### 5. tag-filter.lua
+- **Purpose**: Process hashtags
+- **What it does**:
+  - Finds all `#tags` in your text
+  - Converts to LaTeX `\tag{}` commands
+  - Makes them appear colored in blue
+  - Adds to Tags index
+  - Handles consecutive tags: `#tag1#tag2#tag3`
+- **Processing order**: Fifth (last)
 
 ### 🔧 Build Script (`build.sh`)
 - **Purpose**: One command to convert markdown → PDF
 - **What it does**:
-  1. Takes your markdown file
-  2. Runs it through Pandoc
-  3. Applies both Lua filters
-  4. Uses the LaTeX template
-  5. Generates PDF with XeLaTeX
+  1. Cleans output directory (unless --keep-output flag)
+  2. Runs Pandoc with all 5 filters
+  3. First XeLaTeX pass (creates .idx files)
+  4. Runs makeindex on all 6 index files
+  5. Final XeLaTeX pass (includes formatted indexes)
   6. Opens the result
-- **Usage**: `./build.sh source/your-file.md`
+- **Usage**:
+  - `./build.sh source/your-file.md` (clean build)
+  - `./build.sh source/your-file.md --keep-output` (preserve files)
+- **Important**: Now cleans output by default to prevent stale file bugs
 
-### 🧹 Preprocess Script (`preprocess.sh`)
+### 📦 Export Processor (`process-capacities-export.sh`)
+- **Purpose**: Automate Capacities export processing
+- **What it does**:
+  1. Finds most recent .zip in source/
+  2. Extracts to source/capacities-export/
+  3. Combines all daily notes chronologically
+  4. Copies images to assets/Images/Media/
+  5. Copies PDFs to assets/PDFs/Media/
+  6. Generates source/journal.md
+- **Usage**: `./process-capacities-export.sh`
+- **Requirement**: Place .zip file in source/ directory
+
+### 🎨 Capacities Preprocessor (`preprocess-capacities.sh`)
+- **Purpose**: Convert Capacities markdown structure for LaTeX
+- **What it does**:
+  - Converts Capacities toggle structure
+  - Removes #PersonalJournal tags
+  - Converts top-level tags to headings
+  - Removes mentions from headings (prevents duplicate index entries)
+  - Uncomments image references
+- **Usage**: `./preprocess-capacities.sh "Title" "Author" source/journal.md`
+- **Parameters**:
+  - `$1`: Document title (default: "Journal")
+  - `$2`: Author name (default: "Julio Terra")
+  - `$3`: Input file (default: "source/journal.md")
+
+### 🧹 Encoding Fixer (`preprocess.sh`)
 - **Purpose**: Fix character encoding issues
 - **What it does**:
   - Finds garbled characters (â€", â€™, etc.)
   - Replaces with correct UTF-8 characters
   - Creates a backup (.bak file)
 - **When to use**: If you see weird characters in output
+- **Usage**: `./preprocess.sh source/journal.md`
 
 ### 🔄 Combined Script (`build-clean.sh`)
 - **Purpose**: Preprocess + build in one command
 - **What it does**:
-  1. Fixes encoding issues
-  2. Builds the PDF
-- **Usage**: `./build-clean.sh source/your-file.md`
+  1. Runs preprocess.sh (unless --skip-preprocess)
+  2. Runs build.sh
+- **Usage**:
+  - `./build-clean.sh source/your-file.md`
+  - `./build-clean.sh source/your-file.md --skip-preprocess`
 
 ## Workflow Visualization
 
+### Complete Capacities Workflow
+
 ```
-Your Capacities Export (Markdown)
+Capacities Export (.zip)
           ↓
-    preprocess.sh (optional)
-    [Fixes encoding]
+process-capacities-export.sh
+    [Extract, combine, copy assets]
           ↓
-    Pandoc + Filters
-    ├─ name-filter.lua [Finds people]
-    └─ tag-filter.lua  [Finds tags]
+source/journal.md created
           ↓
-    LaTeX Template
-    [Applies styling]
+preprocess-capacities.sh
+    [Structure conversion, cleanup]
           ↓
-    XeLaTeX Engine
-    [Generates PDF]
+Pandoc + 5 Filters
+    ├─ filter-media-links.lua      [Clean media]
+    ├─ remove-object-embeds.lua    [Remove embeds]
+    ├─ add-index-entries.lua       [Route to indexes]
+    ├─ name-filter.lua             [Find people]
+    └─ tag-filter.lua              [Find tags]
           ↓
-    Beautiful PDF! 📕
-    - Colored tags
-    - Highlighted names
+LaTeX Template
+    [Apply styling, set up indexes]
+          ↓
+XeLaTeX First Pass
+    [Generate .idx files for 6 indexes]
+          ↓
+makeindex × 6
+    [Process each .idx → .ind]
+          ↓
+XeLaTeX Final Pass
+    [Include formatted indexes]
+          ↓
+Beautiful PDF! 📕
+    - Colored tags and names
     - Professional layout
-    - Indexes included
+    - 6 comprehensive indexes
+```
+
+### Index Generation Pipeline
+
+```
+Markdown with links/tags
+          ↓
+Filters add: \index[category]{entry}
+          ↓
+XeLaTeX creates .idx files:
+    - books.idx
+    - definitions.idx
+    - organizations.idx
+    - people.idx
+    - projects.idx
+    - tags.idx
+          ↓
+makeindex processes each:
+    .idx → .ind (formatted)
+          ↓
+XeLaTeX includes .ind files
+          ↓
+Indexes appear in PDF
 ```
 
 ## What Works Now
 
-✅ **Single file conversion** - Convert one journal entry
+✅ **Capacities export processing** - Automated extraction and combination
+✅ **Six separate indexes** - Books, Definitions, Organizations, People, Projects, Tags
+✅ **Five Lua filters** - Comprehensive markdown processing
 ✅ **Tag highlighting** - All hashtags colored and indexed
-✅ **Name extraction** - People's names colored and indexed  
+✅ **Name extraction** - People's names colored and indexed
+✅ **Object embed removal** - Clean handling of embedded pages
 ✅ **Professional typography** - Book-quality layout
 ✅ **Print-ready format** - 6" × 9" with proper margins
-✅ **Automatic indexes** - Names and tags at the back
 ✅ **Character encoding fixes** - Clean up export issues
+✅ **Clean builds** - Output cleared by default
 ✅ **VS Code integration** - Settings ready for LaTeX Workshop
 
 ## What's Coming
 
-🚧 **Batch processing** - Combine multiple days/months
+🚧 **Batch processing** - Process multiple exports
 🚧 **URL footnotes** - External links as footnotes
-🚧 **Image handling** - Resize and place images properly
+🚧 **Enhanced image handling** - Better sizing and placement
 🚧 **Custom front matter** - Title page, dedication
 🚧 **Month dividers** - Chapter breaks for each month
 🚧 **Statistics page** - Word count, entry count
 🚧 **Date formatting** - Prettier date displays
-🚧 **Table of contents** - Monthly TOC generation
 
 ## Getting Started Path
 
 1. **Install Everything** → Follow `INSTALL.md`
-2. **First Build Test** → Use the sample file
-3. **Review Output** → See what it creates
-4. **Customize** → Tweak colors, fonts, layout
-5. **Add Your Content** → Process your journal entries
-6. **Iterate** → Refine until perfect
-7. **Print** → Send to printer or print-on-demand
+2. **Export from Capacities** → Place .zip in source/
+3. **Process Export** → Run `./process-capacities-export.sh`
+4. **Preprocess** → Run `./preprocess-capacities.sh`
+5. **Build PDF** → Run `./build.sh source/journal.md`
+6. **Review Output** → Check your PDF
+7. **Customize** → Tweak colors, fonts, layout
+8. **Iterate** → Refine until perfect
+9. **Print** → Send to printer or print-on-demand
 
 ## Tech Stack
 
 | Component | Purpose | Why This Choice |
 |-----------|---------|-----------------|
-| Pandoc | Markdown → LaTeX | Industry standard, powerful |
+| Pandoc | Markdown → LaTeX | Industry standard, powerful filtering |
 | XeLaTeX | LaTeX → PDF | Unicode support, modern fonts |
-| Lua | Filtering/Processing | Built into Pandoc, fast |
+| imakeidx | Multiple indexes | Separate indexes for each category |
+| Lua | Filtering/Processing | Built into Pandoc, fast, flexible |
 | VS Code | Editor | Best free editor, great extensions |
 | LaTeX Workshop | Live preview | Makes editing easier |
 | Book class | Document type | Professional book layout |
@@ -167,18 +278,35 @@ Your Capacities Export (Markdown)
 ## Customization Hotspots
 
 **Most Common Tweaks:**
-1. Colors (template: `\definecolor` lines)
-2. Fonts (template: `\setmainfont` lines)
-3. Page size (template: `geometry` package)
-4. Name list (name-filter: `common_names` table)
-5. Margins (template: geometry settings)
+1. **Colors** - template: `\definecolor` lines around line 65
+2. **Fonts** - template: `\setmainfont` around line 14
+3. **Page size** - template: `geometry` package around line 22
+4. **Name list** - name-filter.lua: `common_names` table
+5. **Margins** - template: geometry settings
 
 **Less Common:**
-- Header/footer style
-- Chapter formatting
-- Index appearance
-- Table styling
-- Link behavior
+- Header/footer style (template: fancyhdr section)
+- Chapter formatting (template: titleformat)
+- Index appearance (template: index section)
+- Add new index types (see README.md)
+- Filter processing order (build.sh: --lua-filter sequence)
+
+## Adding New Features
+
+### Add a New Index Category
+
+See the detailed guide in README.md for step-by-step instructions on adding new index types (e.g., Locations, Events, etc.).
+
+### Add a New Filter
+
+1. Create filter in `filters/your-filter.lua`
+2. Add to build.sh pipeline: `--lua-filter=filters/your-filter.lua \`
+3. Position matters - filters run in order
+4. Test with small files first
+
+### Modify Filter Behavior
+
+Edit the Lua filter files directly. They're well-commented and use Pandoc's AST structure. See [Lua Filters Guide](https://pandoc.org/lua-filters.html).
 
 ## File Size Expectations
 
@@ -198,6 +326,7 @@ Your Capacities Export (Markdown)
 - **Interior**: Black & white
 - **Paper**: Cream or white (your choice)
 - **Resolution**: 300+ DPI (PDF native)
+- **Font**: Corundum Text Book (embedded)
 
 **Printing Options:**
 - Self-print at home/office
@@ -210,22 +339,23 @@ Your Capacities Export (Markdown)
 
 ## Development Roadmap
 
-### Phase 1: ✅ Basic Pipeline (Complete!)
-- Template creation
-- Filter development  
-- Build scripts
+### Phase 1: ✅ Core Pipeline (Complete!)
+- Template creation with 6 indexes
+- Five-filter processing pipeline
+- Build scripts with clean output
+- Capacities export automation
 - Documentation
 
-### Phase 2: 🚧 Enhancements (Next)
-- Batch processing
-- Better character handling
-- Image optimization
+### Phase 2: 🚧 Enhancements (Current)
 - URL/footnote system
+- Enhanced image handling
+- Better date formatting
+- Statistics generation
 
 ### Phase 3: 🔮 Advanced Features (Future)
 - Multiple template options
 - Interactive configuration
-- Statistics generation
+- Batch processing multiple exports
 - Web preview
 
 ### Phase 4: 🎨 Polish (Future)
@@ -246,7 +376,7 @@ A: Yes! Edit the geometry settings in the template.
 A: Edit `filters/name-filter.lua` and add to the `common_names` list.
 
 **Q: Can I use this for other content?**
-A: Yes! It works with any markdown content.
+A: Yes! It works with any markdown content, not just Capacities exports.
 
 **Q: What if I want different colors?**
 A: Edit the `\definecolor` lines in the template. Use RGB values 0-255.
@@ -254,24 +384,35 @@ A: Edit the `\definecolor` lines in the template. Use RGB values 0-255.
 **Q: How do I print this?**
 A: Use the PDF from `output/` with any print service or home printer.
 
+**Q: Can I add new index types?**
+A: Yes! See README.md for detailed instructions on adding index categories.
+
+**Q: Why does build.sh clean the output directory?**
+A: Prevents stale .ind files from masking build issues. Use --keep-output to preserve files.
+
+**Q: What font should I use if I don't have Corundum Text Book?**
+A: See README.md's "Changing Fonts" section for alternatives and instructions.
+
 ## Support & Learning
 
 - Read through all `.md` files in the project
 - Check `QUICKREF.md` for quick answers
-- Look at the sample file for markdown structure
+- Look at the filter code - it's commented
 - Experiment with small changes
-- Test often with your sample file
+- Test often with sample files
+- Check logs/ directory when things fail
 
 ## Success Metrics
 
 You'll know it's working when you see:
 - ✅ PDF opens automatically after build
 - ✅ Tags appear in blue color
-- ✅ Names appear in red color  
-- ✅ Indexes show at the back
+- ✅ Names appear in red color
+- ✅ Six indexes show at the back
 - ✅ Layout looks professional
+- ✅ Fonts are embedded correctly
 - ✅ Ready to print or share
 
 ---
 
-**Ready to begin?** Start with `INSTALL.md` → then try `./build.sh source/2025-10-21.md`
+**Ready to begin?** Start with `INSTALL.md` → then `./process-capacities-export.sh` → `./build.sh source/journal.md`
