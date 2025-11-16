@@ -130,17 +130,21 @@ grep -n '!\[.*\]([^)]*\.pdf)' "$INPUT_FILE" | while IFS=: read line_num full_lin
             # Extract original alt text
             alt_text=$(echo "$full_line" | sed 's/.*!\[\([^]]*\)\].*/\1/')
             jpg_ref=$(echo "$pdf_ref" | sed 's/ /%20/g')
-            new_lines="${new_lines}![${alt_text} - Page $((page_num + 1))](${jpg_ref%.pdf}-${page_num}.jpg)"
+            new_lines="${new_lines}![${alt_text} (PDF) - Page $((page_num + 1))](${jpg_ref%.pdf}-${page_num}.jpg)"
             page_num=$((page_num + 1))
         done
-        
+
         # Replace the line
         escaped_line=$(echo "$full_line" | sed 's/[\/&]/\\&/g' | sed 's/\[/\\[/g' | sed 's/\]/\\]/g' | sed 's/\*/\\*/g')
         sed -i '' "${line_num}s|.*|${new_lines}|" "$INPUT_FILE"
         echo "  📄 Multi-page: $(basename "$pdf_ref") → ${page_num} images"
     else
-        # Single page: simple replacement
-        sed -i '' "${line_num}s|\.pdf)|.jpg)|" "$INPUT_FILE"
+        # Single page: append (PDF) to alt text and change extension
+        alt_text=$(echo "$full_line" | sed 's/.*!\[\([^]]*\)\].*/\1/')
+        jpg_ref=$(echo "$pdf_ref" | sed 's/ /%20/g')
+        replacement="![${alt_text} (PDF)](${jpg_ref%.pdf}.jpg)"
+        escaped_line=$(echo "$full_line" | sed 's/[\/&]/\\&/g' | sed 's/\[/\\[/g' | sed 's/\]/\\]/g' | sed 's/\*/\\*/g')
+        sed -i '' "${line_num}s|${escaped_line}|${replacement}|" "$INPUT_FILE"
     fi
 done
 
