@@ -6,11 +6,13 @@ Common commands and tasks for your journal workflow.
 
 ### Test Your Installation
 ```bash
-# Build the included test file to verify everything works
-./build.sh source/test.md
+# Process the included test.zip file to verify everything works
+./process-capacities-export.sh source/test.zip
+./preprocess-capacities.sh "Test Journal" "Test User" source/journal.md
+./build.sh source/journal.md
 ```
 
-The test file exercises all 5 filters and generates entries in all 6 indexes.
+The test file exercises all 4 filters and generates entries in all 6 indexes.
 
 ### Build from Journal Markdown
 ```bash

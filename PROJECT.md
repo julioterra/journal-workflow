@@ -56,7 +56,7 @@ journal-workflow/
   - Defines colors, margins, headers, footers
 - **Customizable**: Yes! Change colors, fonts, layout, add new indexes
 
-### 🎬 Filter Pipeline (5 Lua Filters)
+### 🎬 Filter Pipeline (4 Lua Filters)
 
 #### 1. filter-media-links.lua
 - **Purpose**: Clean up media links from Capacities
@@ -98,7 +98,7 @@ journal-workflow/
 - **Purpose**: One command to convert markdown → PDF
 - **What it does**:
   1. Cleans output directory (unless --keep-output flag)
-  2. Runs Pandoc with all 5 filters
+  2. Runs Pandoc with all 4 filters
   3. First XeLaTeX pass (creates .idx files)
   4. Runs makeindex on all 6 index files
   5. Final XeLaTeX pass (includes formatted indexes)
@@ -328,7 +328,7 @@ Edit the Lua filter files directly. They're well-commented and use Pandoc's AST 
 
 ### Phase 1: ✅ Core Pipeline (Complete!)
 - Template creation with 6 indexes
-- Five-filter processing pipeline
+- Four-filter processing pipeline
 - Build scripts with clean output
 - Capacities export automation
 - Documentation

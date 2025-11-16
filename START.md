@@ -136,11 +136,13 @@ If anything fails, see `INSTALL.md` troubleshooting section.
 
 ### Test Your Installation
 
-Once everything is installed, test the workflow with the included test file:
+Once everything is installed, test the workflow with the included test.zip file:
 
 ```bash
 cd ~/Documents/journal-workflow
-./build.sh source/test.md
+./process-capacities-export.sh source/test.zip
+./preprocess-capacities.sh "Test Journal" "Test User" source/journal.md
+./build.sh source/journal.md
 ```
 
 **What to look for in the test PDF:**
@@ -149,7 +151,7 @@ cd ~/Documents/journal-workflow
   - Books: "Thinking Fast and Slow"
   - Definitions: "Cognitive Bias"
   - Organizations: "Stanford University"
-  - People: "Sarah Johnson"
+  - People: "Alice Smith, Bob Johnson, Carol Martinez, David Chen"
   - Projects: "Journal Workflow"
   - Tags: All hashtags from the document
 - **Professional layout**: Margins, headers, page numbers

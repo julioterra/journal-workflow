@@ -30,59 +30,64 @@ journal-workflow/
 - **Clean typography**: Professional margins, headers, and footers
 
 ### 🚧 Coming Soon
-- URL/reference footnotes
-- Custom front matter (title page, dedication)
-- Batch processing for multiple files
-- Advanced styling options
-- Enhanced image handling
+- Support for emojis
+- Ability to handle complex tables
+- Enhanced formatting for tags
+- Output configuration via build.sh flags
 
 ## 🚀 Quick Start
 
-### 0. Test Your Installation
+### Test Your Installation
 
-Verify everything is working with the included test file:
+Here is how to verify that everything is working using the included test.zip file:
 
 ```bash
-./build.sh source/test.md
+./process-capacities-export.sh source/test.zip 
+./preprocess-capacities.sh "journal title" "author name" source/journal.md
+./build.sh source/journal.md
 ```
+### Output
 
-The test PDF should show:
+This will generate a test PDF that should show:
 - Tags in **blue** color (#testing, #workflow, etc.)
 - Object references indexed in all 6 indexes
 - Professional book layout
 
 If the test works, you're ready to build your own journal!
 
-### 1. Build Your Journal
+## Build Your Own Print-Ready Journal
 
+### Step 1
+Export your content from Capacities and place the downloaded `.zip` file in the `source/` directory of the project. Follow these steps to download your daily notes from Capacities:
+1. Go to the `Daily Notes` page in Capacities 
+2. Use the filter to set a date range
+3. Choose `export` from the `...` menu on the top right corner of the window
+4. Select the `Export folder containing all subpages` checkbox from the pop-up modal
+
+### Step 2
 ```bash
-# Build from journal markdown
-./build.sh source/journal.md
-
-# Keep existing output files (don't clean)
-./build.sh source/journal.md --keep-output
-```
-
-### 2. Process a Capacities Export
-
-```bash
-# Place your Capacities export .zip in the source/ folder, then:
+# Run the process-capacities-export.sh script to extract, combine daily notes, and copy assets
 ./process-capacities-export.sh source/your-export.zip
-
-# This will extract, combine daily notes, and copy assets
-# Then build the PDF:
+```
+### Step 3
+```bash
+# Run preprocess-capacities.sh script to prepare combined journal.md file for build:
 ./preprocess-capacities.sh "My Journal" "Your Name" source/journal.md
+```
+**Important Note:** This step contains some preprocessing logic that is tailored to the way I format my journal. You may need to tweak this file to make appropriate adjustments to your content for the build to work properly.   
+### Step 4
+```bash
+# Run build.sh script to convert your capacities journal into a print-ready pdf file:
 ./build.sh source/journal.md
 ```
 
-### 3. Understanding the Output
+## Understanding the Output
 
 Your PDF will have:
-- **Tags** like #PersonalJournal in **blue** (indexed under Tags)
-- **Organizations** indexed separately
-- **Projects** indexed separately
-- **People** indexed separately
-- **Six comprehensive indexes** at the back
+- **Daily Notes** organized by date
+- **Images & PDFs** rendered in large format
+- **Tags** like #PersonalJournal in **blue** 
+- **Six Indexes** in the back for the following object types: Organizations, Projects, People, Books, Definitions, and Tags
 
 ## 📚 Understanding the Filters
 
@@ -342,6 +347,7 @@ Check the logs:
 ```bash
 cat logs/build.sh-build.log | tail -50
 ```
+You can also check the log files that are automatically saved in the `logs/` directory.  
 
 Common issues:
 - Missing LaTeX packages (MacTeX should have everything)
@@ -355,7 +361,8 @@ Common issues:
 - Use consistent tag formats: `#tag` not `# tag`
 - Link people's names consistently
 - Use markdown headings (##, ###) for structure
-- Keep formatting simple (bold, italic, lists)
+- Only use H2 - H4, since H1 is used for date titles
+- Keep formatting simple (bold, headings, italic, lists)
 
 ### Preparing for Print
 - Review the PDF at 100% zoom (actual size)
