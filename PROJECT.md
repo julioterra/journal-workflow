@@ -67,12 +67,12 @@ journal-workflow/
 - **Processing order**: First
 
 #### 2. remove-object-embeds.lua
-- **Purpose**: Remove standalone embedded objects
+- **Purpose**: Remove standalone embedded objects and convert inline page links to plain text
 - **What it does**:
   - Finds paragraphs with only a link to Pages/*.md
   - Reads the linked file's frontmatter
   - Removes if link text matches file title
-  - Preserves inline references
+  - Converts inline page links to plain text (links won't work in hardcover books)
 - **Processing order**: Second
 - **Expandable**: Can add other object types beyond Pages
 

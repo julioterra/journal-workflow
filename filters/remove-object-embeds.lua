@@ -1,5 +1,6 @@
 -- remove-object-embeds.lua
--- Remove standalone embed links to object .md files (currently: Pages/*.md)
+-- Remove standalone embed links to Pages/*.md files
+-- Convert inline page links to plain text (links won't work in hardcover books)
 
 -- Helper function to URL decode a string
 local function url_decode(str)
@@ -83,4 +84,18 @@ function Para(el)
   return el
 end
 
-return {{Para = Para}}
+-- Process inline links to convert page links to plain text
+function Link(el)
+  local target = el.target or ""
+
+  -- Check if it's a Pages/*.md link
+  if target:match("^Pages/.*%.md$") then
+    -- Convert to plain text (preserve the link text, remove the hyperlink)
+    -- Links won't work in hardcover books, and local links won't work in PDFs
+    return el.content
+  end
+
+  return el
+end
+
+return {{Para = Para, Link = Link}}

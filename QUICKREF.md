@@ -209,7 +209,7 @@ cat output/people.ind
 The workflow uses 4 filters in this order:
 
 1. **filter-media-links.lua** - Clean media references
-2. **remove-object-embeds.lua** - Remove standalone embedded pages
+2. **remove-object-embeds.lua** - Remove standalone embedded pages, convert inline page links to plain text
 3. **add-index-entries.lua** - Route objects to indexes
 4. **tag-filter.lua** - Process hashtags
 

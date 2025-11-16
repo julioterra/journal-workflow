@@ -95,8 +95,8 @@ The workflow uses four Lua filters to process your markdown:
 
 ### 2. remove-object-embeds.lua
 - Removes standalone embedded object links (Pages/*.md)
+- Converts inline page links to plain text (links won't work in hardcover books)
 - Prevents embedded page content from appearing in final PDF
-- Preserves inline references
 
 ### 3. add-index-entries.lua
 - Routes references to appropriate index categories
