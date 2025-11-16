@@ -1,4 +1,4 @@
-# 📔 Journal Workflow: Capacities → PDF
+# 📔 Journal Workflow: Capacities → Publishing-Ready PDF
 
 A complete Pandoc + LaTeX workflow for converting your Capacities journal (exported in Markdown) into beautifully typeset, print-ready PDFs.
 
