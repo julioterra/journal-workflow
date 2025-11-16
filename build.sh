@@ -66,7 +66,6 @@ pandoc "$INPUT_FILE" \
   --lua-filter=filters/filter-media-links.lua \
   --lua-filter=filters/remove-object-embeds.lua \
   --lua-filter=filters/add-index-entries.lua \
-  --lua-filter=filters/name-filter.lua \
   --lua-filter=filters/tag-filter.lua \
   --toc \
   --toc-depth=2 \

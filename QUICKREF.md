@@ -28,7 +28,7 @@ The test file exercises all 5 filters and generates entries in all 6 indexes.
 ```bash
 # 1. Place your Capacities export .zip in source/
 # 2. Run the processor
-./process-capacities-export.sh
+./process-capacities-export.sh source/your-export.zip
 
 # 3. Preprocess for LaTeX
 ./preprocess-capacities.sh "My Journal" "Your Name" source/journal.md
@@ -57,8 +57,9 @@ open output/
 
 ### process-capacities-export.sh
 ```bash
-./process-capacities-export.sh
-# Requires: .zip file in source/ directory
+./process-capacities-export.sh <zip-file>
+# Example: ./process-capacities-export.sh source/test.zip
+# Requires: Valid .zip file path
 # Creates: source/journal.md and copies assets
 ```
 
@@ -118,17 +119,6 @@ Edit `templates/journal-template.tex` (line ~14):
 fc-list : family | sort | uniq
 ```
 
-### Add a Person to Recognition List
-Edit `filters/name-filter.lua`:
-```lua
-local common_names = {
-  Andrea = true,
-  Rose = true,
-  Luca = true,
-  Mila = true,
-  YourName = true,  -- Add here
-}
-```
 
 ### Add a New Index Type
 See README.md "Adding a New Index Type" section for complete instructions.
@@ -216,13 +206,12 @@ cat output/people.ind
 
 ## 📚 Filter Reference
 
-The workflow uses 5 filters in this order:
+The workflow uses 4 filters in this order:
 
 1. **filter-media-links.lua** - Clean media references
 2. **remove-object-embeds.lua** - Remove standalone embedded pages
 3. **add-index-entries.lua** - Route objects to indexes
-4. **name-filter.lua** - Process people's names
-5. **tag-filter.lua** - Process hashtags
+4. **tag-filter.lua** - Process hashtags
 
 ## 📇 Index Categories
 
@@ -233,7 +222,7 @@ The system generates 6 separate indexes:
 | **Books** | Book references | add-index-entries.lua |
 | **Definitions** | Defined terms | add-index-entries.lua |
 | **Organizations** | Schools, companies | add-index-entries.lua |
-| **People** | People's names | name-filter.lua + add-index-entries.lua |
+| **People** | People's names | add-index-entries.lua |
 | **Projects** | Project references | add-index-entries.lua |
 | **Tags** | All hashtags | tag-filter.lua |
 
@@ -284,7 +273,7 @@ logs/
 ```bash
 # 1. Export from Capacities, save .zip to source/
 # 2. Process the export
-./process-capacities-export.sh
+./process-capacities-export.sh source/your-export.zip
 
 # 3. Preprocess the combined journal
 ./preprocess-capacities.sh "2023 Journal" "Your Name" source/journal.md
@@ -338,7 +327,6 @@ grep "for idx in" build.sh
 | Problem | Solution |
 |---------|----------|
 | Tags not colored | Check `\tag{}` command in template, verify tag-filter.lua ran |
-| Names not recognized | Add to `name-filter.lua` common_names table |
 | Wrong page size | Edit geometry settings in template |
 | Font not found | Use `fc-list` to check availability, update template |
 | Build fails | Check `logs/build.sh-build.log` for errors |

@@ -7,8 +7,6 @@ assets/*
 !assets/.gitkeep
 output/*
 !output/.gitkeep
-archive/*
-!archive/.gitkeep
 
 # Additional source file patterns (exclude test-data)
 *.jpg

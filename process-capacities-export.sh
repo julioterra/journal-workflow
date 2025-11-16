@@ -2,6 +2,9 @@
 
 # process-capacities-export.sh
 # Processes Capacities export: extracts zip, combines daily notes, converts PDFs, copies images
+#
+# Usage: ./process-capacities-export.sh <zip-file>
+# Example: ./process-capacities-export.sh source/test.zip
 
 set -e  # Exit on any error
 
@@ -9,7 +12,6 @@ SOURCE_DIR="source"
 EXPORT_DIR="source/capacities-export"
 OUTPUT_FILE="source/journal.md"
 ASSETS_DIR="assets"
-ARCHIVE_DIR="archive"
 
 # Colors for output
 GREEN='\033[0;32m'
@@ -18,24 +20,40 @@ RED='\033[0;31m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
+# ============================================================================
+# STEP 0: Validate and Extract Zip File
+# ============================================================================
+
 echo -e "${BLUE}📦 Processing Capacities export...${NC}"
+echo -e "${GREEN}📦 Step 0: Validating export zip file...${NC}"
 
-# ============================================================================
-# STEP 0: Find and Extract Zip File
-# ============================================================================
-
-echo -e "${GREEN}📦 Step 0: Looking for export zip file...${NC}"
-
-# Find most recent .zip file in source directory
-ZIP_FILE=$(find "$SOURCE_DIR" -maxdepth 1 -name "*.zip" -type f -print0 | xargs -0 ls -t | head -n 1)
-
-if [ -z "$ZIP_FILE" ]; then
-    echo -e "${RED}❌ Error: No .zip file found in $SOURCE_DIR${NC}"
-    echo "Please place your Capacities export zip file in: $SOURCE_DIR"
+# Check if zip file parameter was provided
+if [ -z "$1" ]; then
+    echo -e "${RED}❌ Error: No zip file specified${NC}"
+    echo ""
+    echo "Usage: $0 <zip-file>"
+    echo ""
+    echo "Examples:"
+    echo "  $0 source/test.zip"
+    echo "  $0 source/my-export.zip"
     exit 1
 fi
 
-echo "  Found: $(basename "$ZIP_FILE")"
+ZIP_FILE="$1"
+
+# Check if file exists
+if [ ! -f "$ZIP_FILE" ]; then
+    echo -e "${RED}❌ Error: File not found: $ZIP_FILE${NC}"
+    exit 1
+fi
+
+# Check if it's a zip file
+if [[ ! "$ZIP_FILE" =~ \.zip$ ]]; then
+    echo -e "${RED}❌ Error: File is not a .zip file: $ZIP_FILE${NC}"
+    exit 1
+fi
+
+echo "  Processing: $(basename "$ZIP_FILE")"
 
 # Clear and recreate export directory
 if [ -d "$EXPORT_DIR" ]; then
@@ -49,13 +67,6 @@ fi
 echo "  Extracting..."
 unzip -q -o -X "$ZIP_FILE" -d "$EXPORT_DIR"
 echo -e "${GREEN}  ✓ Extracted successfully${NC}"
-
-# Archive the zip file with timestamp
-# mkdir -p "$ARCHIVE_DIR"
-# TIMESTAMP=$(date "+%Y-%m-%d_%H-%M-%S")
-# ARCHIVE_NAME="capacities-export-${TIMESTAMP}.zip"
-# mv "$ZIP_FILE" "$ARCHIVE_DIR/$ARCHIVE_NAME"
-# echo -e "${GREEN}  ✓ Archived to: $ARCHIVE_DIR/$ARCHIVE_NAME${NC}"
 
 # ============================================================================
 # STEP 0.5: Clear Previous Output
@@ -297,8 +308,7 @@ echo "  📝 Combined journal: $OUTPUT_FILE"
 echo "  📄 PDFs converted:   $pdf_count files → $ASSETS_DIR/PDFs/Media/"
 echo "  🖼️  Images copied:    $image_count files → $ASSETS_DIR/Images/Media/"
 echo "  📇 References mapped: $reference_count entities → source/references.json"
-echo "  📦 Archived zip:     $ARCHIVE_DIR/$ARCHIVE_NAME"
 echo ""
 echo "Next steps:"
-echo "  1. Run: ./preprocess-capacities.sh $OUTPUT_FILE"
+echo "  1. Run: ./preprocess-capacities.sh \"Title\" \"Author\" $OUTPUT_FILE"
 echo "  2. Run: ./build.sh $OUTPUT_FILE"

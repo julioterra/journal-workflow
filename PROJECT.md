@@ -31,7 +31,6 @@ journal-workflow/
 │   │   ├── filter-media-links.lua
 │   │   ├── remove-object-embeds.lua
 │   │   ├── add-index-entries.lua
-│   │   ├── name-filter.lua
 │   │   └── tag-filter.lua
 │   ├── assets/            # Images, PDFs, fonts
 │   └── logs/              # Build logs
@@ -85,18 +84,7 @@ journal-workflow/
   - Generates LaTeX `\index[category]{entry}` commands
 - **Processing order**: Third
 
-#### 4. name-filter.lua
-- **Purpose**: Extract and highlight people's names
-- **What it does**:
-  - Finds Capacities person links: `[Andrea](https://app...)`
-  - Converts to LaTeX `\person{}` commands
-  - Makes names appear colored in red
-  - Adds to People index
-  - Only processes names in recognition list
-- **Customizable**: Add your contacts to `common_names` table
-- **Processing order**: Fourth
-
-#### 5. tag-filter.lua
+#### 4. tag-filter.lua
 - **Purpose**: Process hashtags
 - **What it does**:
   - Finds all `#tags` in your text
@@ -104,7 +92,7 @@ journal-workflow/
   - Makes them appear colored in blue
   - Adds to Tags index
   - Handles consecutive tags: `#tag1#tag2#tag3`
-- **Processing order**: Fifth (last)
+- **Processing order**: Fourth (last)
 
 ### 🔧 Build Script (`build.sh`)
 - **Purpose**: One command to convert markdown → PDF
@@ -123,14 +111,16 @@ journal-workflow/
 ### 📦 Export Processor (`process-capacities-export.sh`)
 - **Purpose**: Automate Capacities export processing
 - **What it does**:
-  1. Finds most recent .zip in source/
+  1. Validates specified .zip file exists
   2. Extracts to source/capacities-export/
   3. Combines all daily notes chronologically
   4. Copies images to assets/Images/Media/
   5. Copies PDFs to assets/PDFs/Media/
   6. Generates source/journal.md
-- **Usage**: `./process-capacities-export.sh`
-- **Requirement**: Place .zip file in source/ directory
+  7. Builds reference map for index entries
+- **Usage**: `./process-capacities-export.sh <zip-file>`
+- **Example**: `./process-capacities-export.sh source/test.zip`
+- **Parameters**: Zip file path (required)
 
 ### 🎨 Capacities Preprocessor (`preprocess-capacities.sh`)
 - **Purpose**: Convert Capacities markdown structure for LaTeX
@@ -171,7 +161,7 @@ journal-workflow/
 ```
 Capacities Export (.zip)
           ↓
-process-capacities-export.sh
+process-capacities-export.sh source/export.zip
     [Extract, combine, copy assets]
           ↓
 source/journal.md created
@@ -179,11 +169,10 @@ source/journal.md created
 preprocess-capacities.sh
     [Structure conversion, cleanup]
           ↓
-Pandoc + 5 Filters
+Pandoc + 4 Filters
     ├─ filter-media-links.lua      [Clean media]
     ├─ remove-object-embeds.lua    [Remove embeds]
     ├─ add-index-entries.lua       [Route to indexes]
-    ├─ name-filter.lua             [Find people]
     └─ tag-filter.lua              [Find tags]
           ↓
 LaTeX Template
@@ -231,9 +220,8 @@ Indexes appear in PDF
 
 ✅ **Capacities export processing** - Automated extraction and combination
 ✅ **Six separate indexes** - Books, Definitions, Organizations, People, Projects, Tags
-✅ **Five Lua filters** - Comprehensive markdown processing
+✅ **Four Lua filters** - Comprehensive markdown processing
 ✅ **Tag highlighting** - All hashtags colored and indexed
-✅ **Name extraction** - People's names colored and indexed
 ✅ **Object embed removal** - Clean handling of embedded pages
 ✅ **Professional typography** - Book-quality layout
 ✅ **Print-ready format** - 6" × 9" with proper margins
@@ -255,8 +243,8 @@ Indexes appear in PDF
 
 1. **Install Everything** → Follow `INSTALL.md`
 2. **Export from Capacities** → Place .zip in source/
-3. **Process Export** → Run `./process-capacities-export.sh`
-4. **Preprocess** → Run `./preprocess-capacities.sh`
+3. **Process Export** → Run `./process-capacities-export.sh source/your-export.zip`
+4. **Preprocess** → Run `./preprocess-capacities.sh "Title" "Author"`
 5. **Build PDF** → Run `./build.sh source/journal.md`
 6. **Review Output** → Check your PDF
 7. **Customize** → Tweak colors, fonts, layout
@@ -281,8 +269,7 @@ Indexes appear in PDF
 1. **Colors** - template: `\definecolor` lines around line 65
 2. **Fonts** - template: `\setmainfont` around line 14
 3. **Page size** - template: `geometry` package around line 22
-4. **Name list** - name-filter.lua: `common_names` table
-5. **Margins** - template: geometry settings
+4. **Margins** - template: geometry settings
 
 **Less Common:**
 - Header/footer style (template: fancyhdr section)
@@ -372,9 +359,6 @@ A: No! The template is ready to use. You can customize by example.
 **Q: Can I change the book size?**
 A: Yes! Edit the geometry settings in the template.
 
-**Q: How do I add more names?**
-A: Edit `filters/name-filter.lua` and add to the `common_names` list.
-
 **Q: Can I use this for other content?**
 A: Yes! It works with any markdown content, not just Capacities exports.
 
@@ -407,7 +391,6 @@ A: See README.md's "Changing Fonts" section for alternatives and instructions.
 You'll know it's working when you see:
 - ✅ PDF opens automatically after build
 - ✅ Tags appear in blue color
-- ✅ Names appear in red color
 - ✅ Six indexes show at the back
 - ✅ Layout looks professional
 - ✅ Fonts are embedded correctly
@@ -415,4 +398,4 @@ You'll know it's working when you see:
 
 ---
 
-**Ready to begin?** Start with `INSTALL.md` → then `./process-capacities-export.sh` → `./build.sh source/journal.md`
+**Ready to begin?** Start with `INSTALL.md` → then `./process-capacities-export.sh source/your-export.zip` → `./build.sh source/journal.md`

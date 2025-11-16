@@ -22,7 +22,6 @@ journal-workflow/
 - **Print-ready dimensions** (6" × 9" book format)
 - **Six separate indexes**: Books, Definitions, Organizations, People, Projects, and Tags
 - **Tag highlighting**: All `#tags` are colored blue and indexed
-- **Name extraction**: People's names (from Capacities links) are colored red and indexed
 - **Object embed removal**: Standalone embedded page references are filtered out
 - **Media link filtering**: Clean handling of images and videos
 - **Clean builds**: Output directory cleared by default (prevents stale file bugs)
@@ -68,7 +67,7 @@ If the test works, you're ready to build your own journal!
 
 ```bash
 # Place your Capacities export .zip in the source/ folder, then:
-./process-capacities-export.sh
+./process-capacities-export.sh source/your-export.zip
 
 # This will extract, combine daily notes, and copy assets
 # Then build the PDF:
@@ -80,14 +79,14 @@ If the test works, you're ready to build your own journal!
 
 Your PDF will have:
 - **Tags** like #PersonalJournal in **blue** (indexed under Tags)
-- **Names** like Andrea in **red** (indexed under People)
 - **Organizations** indexed separately
 - **Projects** indexed separately
+- **People** indexed separately
 - **Six comprehensive indexes** at the back
 
 ## 📚 Understanding the Filters
 
-The workflow uses five Lua filters to process your markdown:
+The workflow uses four Lua filters to process your markdown:
 
 ### 1. filter-media-links.lua
 - Removes Capacities metadata links after images
@@ -104,14 +103,7 @@ The workflow uses five Lua filters to process your markdown:
 - Handles: People, Organizations, Projects, Definitions, Books
 - Reads metadata from linked .md files
 
-### 4. name-filter.lua
-- Finds Capacities person links: `[Andrea](https://app.capacities.io/...)`
-- Converts to LaTeX `\person{}` commands
-- Colors names red
-- Adds to People index
-- **Customizable**: Add names to the `common_names` table
-
-### 5. tag-filter.lua
+### 4. tag-filter.lua
 - Finds hashtags like `#PersonalJournal`
 - Converts to LaTeX `\tag{}` commands
 - Colors tags blue
@@ -136,7 +128,7 @@ The workflow generates **six separate indexes** using LaTeX's `imakeidx` package
 | **Books** | Book references | add-index-entries.lua |
 | **Definitions** | Defined terms and concepts | add-index-entries.lua |
 | **Organizations** | Companies, schools, institutions | add-index-entries.lua |
-| **People** | People's names | name-filter.lua + add-index-entries.lua |
+| **People** | People's names | add-index-entries.lua |
 | **Projects** | Project references | add-index-entries.lua |
 | **Tags** | All hashtags | tag-filter.lua |
 
@@ -189,17 +181,23 @@ Main build script - converts markdown to PDF.
 Processes Capacities export zip files.
 
 ```bash
-./process-capacities-export.sh
+./process-capacities-export.sh <zip-file>
+
+# Examples:
+./process-capacities-export.sh source/test.zip
+./process-capacities-export.sh source/my-export.zip
 ```
 
 **What it does:**
-1. Finds most recent .zip file in source/
+1. Validates the specified .zip file exists
 2. Extracts to source/capacities-export/
 3. Combines all daily notes into source/journal.md
 4. Copies images to assets/Images/Media/
 5. Copies PDFs to assets/PDFs/Media/
+6. Builds reference map for index entries
 
-**Requirements:** Place your Capacities export .zip in the source/ directory
+**Parameters:**
+- `<zip-file>` - Path to the Capacities export zip file (required)
 
 ### preprocess-capacities.sh
 Preprocesses Capacities markdown for LaTeX.
@@ -314,21 +312,6 @@ paperwidth=5in, paperheight=8in
 paperwidth=148mm, paperheight=210mm
 ```
 
-### Adding People to the Index
-
-Edit `filters/name-filter.lua` and add to the `common_names` table:
-
-```lua
-local common_names = {
-  Andrea = true,
-  Rose = true,
-  Luca = true,
-  Mila = true,
-  -- Add your people here:
-  YourName = true,
-  BestFriend = true,
-}
-```
 
 ## 🐛 Troubleshooting
 

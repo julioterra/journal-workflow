@@ -45,7 +45,7 @@ cd journal-workflow
 ```bash
 cd journal-workflow
 # Place your Capacities export .zip in source/
-./process-capacities-export.sh
+./process-capacities-export.sh source/your-export.zip
 ./preprocess-capacities.sh "My Journal" "Your Name" source/journal.md
 ./build.sh source/journal.md
 ```
@@ -189,7 +189,7 @@ If you're importing from Capacities:
 2. **Process the export:**
    ```bash
    cd ~/Documents/journal-workflow
-   ./process-capacities-export.sh
+   ./process-capacities-export.sh source/your-export.zip
    ```
 
 3. **Preprocess for LaTeX:**
@@ -230,7 +230,6 @@ Open your PDF and check:
 ### ✅ Success Indicators
 
 - **Tags are blue**: Look for #PersonalJournal, #parenting, etc.
-- **Names are red**: People's names should be highlighted
 - **Professional layout**: Clean margins, headers, page numbers
 - **Six indexes at back**: Books, Definitions, Organizations, People, Projects, Tags
 - **Readable font**: Corundum Text Book (or substitute if you changed it)
@@ -260,11 +259,6 @@ Try:
 - `{50,205,50}` - Lime green
 - `{255,140,0}` - Dark orange
 
-### Change Name Color
-
-```latex
-\definecolor{namecolor}{RGB}{220,20,60}  % Change these numbers!
-```
 
 ### Change Font
 
@@ -291,23 +285,6 @@ Edit `templates/journal-template.tex` (line ~14):
 fc-list : family | sort | uniq
 ```
 
-### Add Your Friends/Family
-
-Edit `filters/name-filter.lua`:
-
-```lua
-local common_names = {
-  Andrea = true,
-  Rose = true,
-  Luca = true,
-  Mila = true,
-  -- Add your people here:
-  YourName = true,
-  BestFriend = true,
-}
-```
-
-Save, rebuild, and see the changes!
 
 ---
 
@@ -391,12 +368,6 @@ fc-list : family | sort | uniq
 - Did the build complete without errors?
 - Look at `logs/build.sh-build.log`
 
-### Names aren't colored
-**Check**:
-- Is the name in the `common_names` list?
-- Add it to `filters/name-filter.lua`
-- Rebuild after adding
-
 ### Indexes are missing
 **Check**:
 - Look at `logs/build.sh-index.log` for errors
@@ -462,7 +433,7 @@ You now have:
 - ✅ A complete, working workflow
 - ✅ Your first journal PDF
 - ✅ Six comprehensive indexes
-- ✅ Five powerful filters processing your content
+- ✅ Four powerful filters processing your content
 - ✅ The knowledge to customize it
 - ✅ All the tools you need
 
@@ -497,4 +468,4 @@ You now have:
 
 Quick start: `./build.sh source/journal.md`
 
-Capacities workflow: `./process-capacities-export.sh` → `./preprocess-capacities.sh` → `./build.sh source/journal.md`
+Capacities workflow: `./process-capacities-export.sh source/your-export.zip` → `./preprocess-capacities.sh` → `./build.sh source/journal.md`
