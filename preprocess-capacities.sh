@@ -95,8 +95,8 @@ echo "🖼️  Converting PDFs to JPG..."
 # Step 4: Find and convert PDFs, handle multi-page
 echo "🖼️  Converting PDFs to JPG..."
 
-# First pass: convert all PDFs
-grep -o '!\[.*\](assets/[^)]*\.pdf)' "$INPUT_FILE" | grep -o 'assets/[^)]*.pdf' | sort -u | while read pdf_path; do
+# First pass: convert all PDFs (handle both with and without assets/ prefix)
+grep -o '!\[.*\]([^)]*\.pdf)' "$INPUT_FILE" | grep -o '[^(]*\.pdf' | sort -u | while read pdf_path; do
     pdf_path=$(echo "$pdf_path" | sed 's/%20/ /g')
     
     if [ -f "$pdf_path" ]; then
@@ -113,9 +113,9 @@ done
 
 # Second pass: update markdown references
 # Handle both single-page (file.jpg) and multi-page (file-0.jpg, file-1.jpg, etc.)
-grep -n '!\[.*\](assets/[^)]*\.pdf)' "$INPUT_FILE" | while IFS=: read line_num full_line; do
-    # Extract the PDF path
-    pdf_ref=$(echo "$full_line" | grep -o 'assets/[^)]*.pdf' | sed 's/%20/ /g')
+grep -n '!\[.*\]([^)]*\.pdf)' "$INPUT_FILE" | while IFS=: read line_num full_line; do
+    # Extract the PDF path (with or without assets/ prefix)
+    pdf_ref=$(echo "$full_line" | grep -o '[^(]*\.pdf' | sed 's/%20/ /g')
     jpg_base="${pdf_ref%.pdf}"
     
     # Check if it's multi-page
@@ -146,8 +146,8 @@ done
 
 echo "✅ Complete! Backup: ${INPUT_FILE}.bak"
 
-# Step 5: Update markdown to reference JPGs
-sed -i '' 's/\(!\[.*\](assets\/[^)]*\)\.pdf)/\1.jpg)/g' "$INPUT_FILE"
+# Step 5: Update markdown to reference JPGs (handle both with and without assets/ prefix)
+sed -i '' 's/\(!\[.*\]([^)]*\)\.pdf)/\1.jpg)/g' "$INPUT_FILE"
 
 # Step 6: Add blank lines before and after images for spacing
 sed -i '' 's/^\(!\[.*\].*\)$/\n\1\n/' "$INPUT_FILE"

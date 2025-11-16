@@ -2,7 +2,7 @@
 # Track directories but ignore their contents
 source/*
 !source/.gitkeep
-!source/test.md
+!source/test.zip
 assets/*
 !assets/.gitkeep
 output/*
@@ -10,9 +10,12 @@ output/*
 archive/*
 !archive/.gitkeep
 
-# Additional source file patterns
+# Additional source file patterns (exclude test-data)
 *.jpg
 *.png
+!test-data/**/*.jpg
+!test-data/**/*.png
+!test-data/**/*.pdf
 
 # LaTeX auxiliary files
 *.aux

@@ -148,7 +148,11 @@ if [ -d "$EXPORT_DIR/PDFs/Media" ]; then
                 
                 # Check number of pages
                 page_count=$(mdls -name kMDItemNumberOfPages -raw "$pdf_path" 2>/dev/null || echo "1")
-                
+                # Sanitize: if mdls returns "(null)" or non-numeric, default to 1
+                if ! [[ "$page_count" =~ ^[0-9]+$ ]]; then
+                    page_count=1
+                fi
+
                 if [ "$page_count" -gt 1 ]; then
                     # Multi-page: convert each page separately
                     for ((page=0; page<page_count; page++)); do
