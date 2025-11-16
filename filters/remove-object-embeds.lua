@@ -40,7 +40,7 @@ local function get_filename_without_ext(path)
   return filename and url_decode(filename) or nil
 end
 
--- Process paragraphs to remove standalone Pages embeds
+-- Process paragraphs to remove standalone Pages embeds and convert inline page links
 function Para(el)
   -- Check if paragraph contains only a single link (and maybe whitespace)
   local link = nil
@@ -61,8 +61,8 @@ function Para(el)
 
     -- Check if it's a Pages/*.md link
     if target:match("^Pages/.*%.md$") then
-      -- Get the link text
-      local link_text = pandoc.utils.stringify(link.content)
+      -- Get the link text (trim trailing spaces)
+      local link_text = pandoc.utils.stringify(link.content):gsub("%s+$", "")
 
       -- Construct the full file path (relative to source directory)
       local filepath = "source/capacities-export/" .. url_decode(target)
@@ -73,7 +73,7 @@ function Para(el)
       -- Get filename without extension
       local filename = get_filename_without_ext(target)
 
-      -- Check if link text matches title or filename
+      -- Check if link text matches title or filename (accounting for trailing spaces)
       if (title and link_text == title) or (filename and link_text == filename) then
         -- Remove this paragraph by returning an empty list
         return {}
@@ -81,21 +81,30 @@ function Para(el)
     end
   end
 
-  return el
-end
-
--- Process inline links to convert page links to plain text
-function Link(el)
-  local target = el.target or ""
-
-  -- Check if it's a Pages/*.md link
-  if target:match("^Pages/.*%.md$") then
-    -- Convert to plain text (preserve the link text, remove the hyperlink)
-    -- Links won't work in hardcover books, and local links won't work in PDFs
-    return el.content
+  -- If we get here, it's not a standalone embed to remove
+  -- Walk through inline elements and convert Pages/*.md links to plain text
+  local new_content = {}
+  for _, inline in ipairs(el.content) do
+    if inline.t == "Link" then
+      local target = inline.target or ""
+      if target:match("^Pages/.*%.md$") then
+        -- Convert to plain text (preserve the link text, remove the hyperlink)
+        -- Links won't work in hardcover books, and local links won't work in PDFs
+        for _, text_elem in ipairs(inline.content) do
+          table.insert(new_content, text_elem)
+        end
+      else
+        -- Keep other links as-is
+        table.insert(new_content, inline)
+      end
+    else
+      -- Keep non-link elements as-is
+      table.insert(new_content, inline)
+    end
   end
 
+  el.content = new_content
   return el
 end
 
-return {{Para = Para, Link = Link}}
+return {{Para = Para}}
