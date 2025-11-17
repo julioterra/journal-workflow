@@ -309,15 +309,8 @@ $body$
 }
 \makeatother
 
-% Ensure index starts on a fresh spread (right page with blank left page)
-\clearpage
-\ifodd\value{page}
-  % On odd (right) page: add blank even, then blank odd to start fresh spread
-  \thispagestyle{empty}\hbox{}\clearpage\thispagestyle{empty}\hbox{}\clearpage
-\else
-  % On even (left) page: add blank odd, then blank even, then odd for index
-  \thispagestyle{empty}\hbox{}\clearpage\thispagestyle{empty}\hbox{}\clearpage\thispagestyle{empty}\hbox{}\clearpage
-\fi
+% Ensure index starts on a right (odd) page
+\cleardoublepage
 
 % Manually combine all indexes into one continuous section
 \makeatletter
