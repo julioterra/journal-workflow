@@ -309,16 +309,17 @@ $body$
 }
 \makeatother
 
-% Ensure index starts on a right (odd) page
-% Clear to next odd page, making blank pages empty (no footer)
+% Ensure index starts on a right (odd) page with blank left page
 \clearpage
 \ifodd\value{page}
-  % Already on odd - do nothing
+  % About to write on odd page - previous even page has content
+  % Need to add blank odd, then blank even, so index starts on next odd
+  \thispagestyle{empty}\mbox{}\clearpage
+  \thispagestyle{empty}\mbox{}\clearpage
 \else
-  % On even - add blank odd page without footer
-  \thispagestyle{empty}
-  \mbox{}
-  \clearpage
+  % About to write on even page - previous odd page has content
+  % Add blank even page, index starts on next odd
+  \thispagestyle{empty}\mbox{}\clearpage
 \fi
 
 % Manually combine all indexes into one continuous section
