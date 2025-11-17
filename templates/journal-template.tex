@@ -17,14 +17,13 @@
 \setsansfont{Helvetica Neue}
 \setmonofont[Scale=0.9]{Menlo}
 
-% Emoji support (limited - some emojis may not render)
-% Note: For full emoji support, install Symbola or Noto Color Emoji font
-% Using available system fonts as fallback
-\IfFontExistsTF{Symbola}{
-  \newfontfamily{\emojifont}{Symbola}[Scale=1.0]
+% Emoji support
+% Using Noto Emoji for black-and-white emoji rendering
+\IfFontExistsTF{Noto Emoji}{
+  \newfontfamily{\emojifont}{Noto Emoji}[Scale=1.0]
 }{
-  \IfFontExistsTF{Noto Color Emoji}{
-    \newfontfamily{\emojifont}{Noto Color Emoji}[Scale=1.0,Renderer=Harfbuzz]
+  \IfFontExistsTF{Symbola}{
+    \newfontfamily{\emojifont}{Symbola}[Scale=1.0]
   }{
     % Fallback to Apple Symbols (has limited emoji support)
     \newfontfamily{\emojifont}{Apple Symbols}[Scale=1.0]

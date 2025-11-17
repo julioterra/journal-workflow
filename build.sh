@@ -67,6 +67,7 @@ pandoc "$INPUT_FILE" \
   --lua-filter=filters/remove-object-embeds.lua \
   --lua-filter=filters/add-index-entries.lua \
   --lua-filter=filters/tag-filter.lua \
+  --lua-filter=filters/emoji-filter.lua \
   --toc \
   --toc-depth=2 \
   --number-sections \
