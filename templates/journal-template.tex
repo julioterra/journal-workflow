@@ -79,10 +79,32 @@
 
 % Colors
 \usepackage{xcolor}
-\definecolor{tagcolor}{RGB}{100,149,237}      % Cornflower blue for tags
 \definecolor{linkcolor}{RGB}{70,70,120}      % Steel blue for links
 \definecolor{headingcolor}{RGB}{0,0,0}     % Black
-\definecolor{tag-default}{RGB}{100,149,237}            % Cornflower blue
+
+% Tag background colors (for highlighting)
+\definecolor{tag-bg-default}{RGB}{255,245,157}     % Light yellow highlight (default)
+
+% Define custom highlight colors for specific tags below:
+% Emotions - negative (red/pink tones)
+\definecolor{tag-bg-anxious}{RGB}{255,200,200}     % Light red
+\definecolor{tag-bg-angry}{RGB}{255,180,180}       % Slightly darker red
+\definecolor{tag-bg-frustrated}{RGB}{255,210,210}  % Pink
+\definecolor{tag-bg-sad}{RGB}{200,200,255}         % Light blue
+\definecolor{tag-bg-afraid}{RGB}{255,220,220}      % Very light red
+
+% Emotions - positive (green/blue tones)
+\definecolor{tag-bg-grateful}{RGB}{200,255,200}    % Light green
+\definecolor{tag-bg-excited}{RGB}{255,240,200}     % Light orange
+\definecolor{tag-bg-proud}{RGB}{220,255,220}       % Lighter green
+\definecolor{tag-bg-joy}{RGB}{255,255,200}         % Light yellow-green
+
+% Categories (neutral tones)
+\definecolor{tag-bg-parenting}{RGB}{220,220,255}   % Light purple
+\definecolor{tag-bg-WorkStuff}{RGB}{200,230,255}   % Light blue
+\definecolor{tag-bg-marriage}{RGB}{255,220,240}    % Light pink
+\definecolor{tag-bg-fail}{RGB}{255,190,190}        % Red (for tracking failures)
+\definecolor{tag-bg-win}{RGB}{210,255,210}         % Green (for wins)
 
 % Headers and Footers
 \usepackage{fancyhdr}
@@ -221,12 +243,15 @@
 \makeindex[name=tags,title=Tags,columns=2]
 
 % Tag command - takes display name and original name
+% Uses background highlighting instead of text color
 \makeatletter
 \newcommand{\tag}[2]{%
-  \@ifundefined{color@tag-#2}{%
-    \textcolor{tag-default}{\textbf{\#{}#1}}%
+  \@ifundefined{color@tag-bg-#2}{%
+    % Use default background color if tag-specific color not defined
+    \colorbox{tag-bg-default}{\#{}#1}%
   }{%
-    \textcolor{tag-#2}{\textbf{\#{}#1}}%
+    % Use tag-specific background color
+    \colorbox{tag-bg-#2}{\#{}#1}%
   }%
   \index[tags]{#1}%
   \xspace%
