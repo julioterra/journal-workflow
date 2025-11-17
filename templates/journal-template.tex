@@ -12,10 +12,26 @@
 \usepackage{microtype}
 \usepackage{xspace}
 \setmainfont{Corundum Text Book}[
-  BoldFont={Corundum Text Bold}  % or whatever the bold variant is called
+  BoldFont={Corundum Text Bold}
 ]
 \setsansfont{Helvetica Neue}
 \setmonofont[Scale=0.9]{Menlo}
+
+% Emoji support (limited - some emojis may not render)
+% Note: For full emoji support, install Symbola or Noto Color Emoji font
+% Using available system fonts as fallback
+\IfFontExistsTF{Symbola}{
+  \newfontfamily{\emojifont}{Symbola}[Scale=1.0]
+}{
+  \IfFontExistsTF{Noto Color Emoji}{
+    \newfontfamily{\emojifont}{Noto Color Emoji}[Scale=1.0,Renderer=Harfbuzz]
+  }{
+    % Fallback to Apple Symbols (has limited emoji support)
+    \newfontfamily{\emojifont}{Apple Symbols}[Scale=1.0]
+  }
+}
+% Manual emoji command for wrapping emojis if needed
+\newcommand{\emoji}[1]{{\emojifont #1}}
 
 % Page Layout
 \usepackage[

@@ -28,12 +28,13 @@ journal-workflow/
 - **Capacities export processing**: Automated workflow for processing Capacities exports
 - **Character encoding fixes**: Handles UTF-8 encoding issues
 - **Clean typography**: Professional margins, headers, and footers
+- **Emoji support**: Basic emoji rendering using font fallback (see [Emoji Support](#emoji-support) section)
 
 ### 🚧 Coming Soon
-- Support for emojis
 - Ability to handle complex tables
 - Enhanced formatting for tags
 - Output configuration via build.sh flags
+- Improved emoji support with better font coverage
 
 ## 🚀 Quick Start
 
@@ -317,6 +318,64 @@ paperwidth=5in, paperheight=8in
 paperwidth=148mm, paperheight=210mm
 ```
 
+## 😀 Emoji Support
+
+The workflow now includes basic emoji support! Emojis in your markdown will be rendered in the PDF where possible.
+
+### How It Works
+
+The template automatically attempts to use emoji-capable fonts in this order:
+1. **Symbola** (if installed) - Best coverage for black-and-white emojis
+2. **Noto Color Emoji** (if installed) - Google's emoji font
+3. **Apple Symbols** (fallback) - Limited emoji support, but available on macOS
+
+### Current Limitations
+
+- **Not all emojis render**: The fallback fonts (especially Apple Symbols) have limited emoji coverage
+- **Black and white only**: XeLaTeX doesn't support colored emojis well
+- **Some modern emojis missing**: Newer emoji characters may not be in older fonts
+
+### Improving Emoji Support
+
+For better emoji coverage, install the Symbola font:
+
+**On macOS:**
+```bash
+# Download Symbola font
+curl -L https://dn-works.com/wp-content/uploads/2020/UFAS-Fonts/Symbola.zip -o /tmp/Symbola.zip
+unzip /tmp/Symbola.zip -d /tmp/
+# Install to user fonts directory
+mkdir -p ~/Library/Fonts
+cp /tmp/Symbola.ttf ~/Library/Fonts/
+# Rebuild font cache
+fc-cache -f
+```
+
+**On Linux:**
+```bash
+# Ubuntu/Debian
+sudo apt-get install fonts-symbola
+
+# Arch
+sudo pacman -S ttf-symbola
+```
+
+After installing, rebuild your PDF to use the new font automatically.
+
+### Testing Emoji Support
+
+A test file is provided to check which emojis render:
+```bash
+./build.sh source/emoji-test.md
+open output/emoji-test.pdf
+```
+
+### Manual Emoji Command
+
+For specific emoji formatting, you can use the `\emoji{}` command in LaTeX:
+```latex
+This is a manual emoji: \emoji{😀}
+```
 
 ## 🐛 Troubleshooting
 
