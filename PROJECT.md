@@ -28,6 +28,7 @@ journal-workflow/
 │   ├── templates/         # LaTeX templates
 │   │   └── journal-template.tex
 │   ├── filters/           # Lua filters for processing
+│   │   ├── task-list-filter.lua
 │   │   ├── filter-media-links.lua
 │   │   ├── remove-object-embeds.lua
 │   │   ├── add-index-entries.lua
@@ -50,10 +51,12 @@ journal-workflow/
 - **Purpose**: Defines the look and feel of your PDF
 - **What it does**:
   - Sets page size (6" × 9" book format)
-  - Defines fonts (Corundum Text Book for body text)
+  - Defines fonts (Verdigris MVB Pro Text for body text)
+  - Configures LuaLaTeX font fallback for color emoji support
   - Creates custom commands for tags, names, and index entries
   - Sets up 6 separate indexes using imakeidx
   - Defines colors, margins, headers, footers
+  - Configures nested list indentation
 - **Customizable**: Yes! Change colors, fonts, layout, add new indexes
 
 ### 🎬 Filter Pipeline (4 Lua Filters)
@@ -98,11 +101,12 @@ journal-workflow/
 - **Purpose**: One command to convert markdown → PDF
 - **What it does**:
   1. Cleans output directory (unless --keep-output flag)
-  2. Runs Pandoc with all 4 filters
-  3. First XeLaTeX pass (creates .idx files)
-  4. Runs makeindex on all 6 index files
-  5. Final XeLaTeX pass (includes formatted indexes)
-  6. Opens the result
+  2. Runs Pandoc with all Lua filters
+  3. Converts task list checkboxes to Wingdings 2 characters (sed post-processing)
+  4. First LuaLaTeX pass (creates .idx files)
+  5. Runs makeindex on all 6 index files
+  6. Final LuaLaTeX pass (includes formatted indexes)
+  7. Opens the result
 - **Usage**:
   - `./build.sh source/your-file.md` (clean build)
   - `./build.sh source/your-file.md --keep-output` (preserve files)
@@ -169,27 +173,33 @@ source/journal.md created
 preprocess-capacities.sh
     [Structure conversion, cleanup]
           ↓
-Pandoc + 4 Filters
+Pandoc + Lua Filters
+    ├─ task-list-filter.lua        [Preserve checkboxes]
     ├─ filter-media-links.lua      [Clean media]
     ├─ remove-object-embeds.lua    [Remove embeds]
     ├─ add-index-entries.lua       [Route to indexes]
     └─ tag-filter.lua              [Find tags]
           ↓
-LaTeX Template
-    [Apply styling, set up indexes]
+sed Post-Processing
+    [Convert checkboxes to Wingdings 2]
           ↓
-XeLaTeX First Pass
+LaTeX Template
+    [Apply styling, emoji fallback, indexes]
+          ↓
+LuaLaTeX First Pass
     [Generate .idx files for 6 indexes]
           ↓
 makeindex × 6
     [Process each .idx → .ind]
           ↓
-XeLaTeX Final Pass
+LuaLaTeX Final Pass
     [Include formatted indexes]
           ↓
 Beautiful PDF! 📕
+    - Color emoji support
     - Colored tags and names
     - Professional layout
+    - Task list checkboxes
     - 6 comprehensive indexes
 ```
 

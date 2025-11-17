@@ -12,7 +12,18 @@ Common commands and tasks for your journal workflow.
 ./build.sh source/journal.md
 ```
 
-The test file exercises all 4 filters and generates entries in all 6 indexes.
+The test file exercises all filters and generates entries in all 6 indexes.
+
+### Test Emoji and Checkbox Support
+```bash
+# Build the emoji test file
+./build.sh source/emoji-test.md
+
+# View the result
+open output/emoji-test.pdf
+```
+
+This tests color emoji rendering and task list checkbox formatting.
 
 ### Build from Journal Markdown
 ```bash
@@ -95,30 +106,26 @@ Edit `templates/journal-template.tex` (line ~65):
 ```
 Change RGB values (0-255 each).
 
-### Change Name Color
-Edit `templates/journal-template.tex` (line ~66):
-```latex
-\definecolor{namecolor}{RGB}{220,20,60}  % Crimson
-```
-
 ### Change Font
-Edit `templates/journal-template.tex` (line ~14):
+Edit `templates/journal-template.tex` (line ~25):
 ```latex
-\setmainfont{Corundum Text Book}[
-  BoldFont={Corundum Text Bold}
+\setmainfont{VerdigrisMVBProText-Rg}[
+  Extension={.otf},
+  BoldFont={VerdigrisMVBProText-Bd},
+  ItalicFont={VerdigrisMVBProText-It},
+  BoldItalicFont={VerdigrisMVBProText-BdIt},
+  RawFeature={fallback=emojifallback}
 ]
 
-% Popular alternatives:
-% \setmainfont{Palatino}
-% \setmainfont{Garamond}
-% \setmainfont{Baskerville}
-% \setmainfont{Georgia}
-% \setmainfont{Hoefler Text}
+% Popular alternatives (keep emoji fallback!):
+% \setmainfont{Palatino}[RawFeature={fallback=emojifallback}]
+% \setmainfont{Garamond}[RawFeature={fallback=emojifallback}]
 ```
 
 **Check available fonts:**
 ```bash
 fc-list : family | sort | uniq
+luaotfload-tool --find="Font Name"  # Check if LuaLaTeX can find it
 ```
 
 
@@ -170,14 +177,14 @@ ls -lt logs/
 ### Check Software Versions
 ```bash
 pandoc --version
-xelatex --version
+lualatex --version
 fc-list --version  # Font config
 ```
 
 ### Check LaTeX Installation
 ```bash
-which xelatex
-pdflatex --version
+which lualatex
+luaotfload-tool --version
 kpsewhich imakeidx.sty  # Check for imakeidx package
 ```
 
@@ -208,12 +215,15 @@ cat output/people.ind
 
 ## 📚 Filter Reference
 
-The workflow uses 4 filters in this order:
+The workflow uses Lua filters in this order:
 
-1. **filter-media-links.lua** - Clean media references
-2. **remove-object-embeds.lua** - Remove standalone embedded pages, convert inline page links to plain text
-3. **add-index-entries.lua** - Route objects to indexes
-4. **tag-filter.lua** - Process hashtags
+1. **task-list-filter.lua** - Preserve task list structure (placeholder)
+2. **filter-media-links.lua** - Clean media references
+3. **remove-object-embeds.lua** - Remove standalone embedded pages, convert inline page links to plain text
+4. **add-index-entries.lua** - Route objects to indexes
+5. **tag-filter.lua** - Process hashtags
+
+After Pandoc, sed post-processing converts checkboxes to Wingdings 2 characters and scales them to 80%.
 
 ## 📇 Index Categories
 

@@ -11,26 +11,28 @@
 \usepackage{fontspec}
 \usepackage{microtype}
 \usepackage{xspace}
-\setmainfont{Corundum Text Book}[
-  BoldFont={Corundum Text Bold}
+
+% LuaLaTeX emoji font fallback configuration
+% Apple Color Emoji for emojis, Wingdings 2 for checked boxes, Menlo for other symbols
+\directlua{
+  luaotfload.add_fallback("emojifallback", {
+    "Apple Color Emoji:mode=harf;",
+    "Wingdings 2:mode=node;",
+    "Menlo:mode=node;"
+  })
+}
+
+% Use Verdigris MVB Pro Text with emoji fallback (using filenames)
+\setmainfont{VerdigrisMVBProText-Rg}[
+  Extension={.otf},
+  BoldFont={VerdigrisMVBProText-Bd},
+  ItalicFont={VerdigrisMVBProText-It},
+  BoldItalicFont={VerdigrisMVBProText-BdIt},
+  RawFeature={fallback=emojifallback}
 ]
 \setsansfont{Helvetica Neue}
 \setmonofont[Scale=0.9]{Menlo}
-
-% Emoji support
-% Using Noto Emoji for black-and-white emoji rendering
-\IfFontExistsTF{Noto Emoji}{
-  \newfontfamily{\emojifont}{Noto Emoji}[Scale=1.0]
-}{
-  \IfFontExistsTF{Symbola}{
-    \newfontfamily{\emojifont}{Symbola}[Scale=1.0]
-  }{
-    % Fallback to Apple Symbols (has limited emoji support)
-    \newfontfamily{\emojifont}{Apple Symbols}[Scale=1.0]
-  }
-}
-% Manual emoji command for wrapping emojis if needed
-\newcommand{\emoji}[1]{{\emojifont #1}}
+\newfontfamily\wingdingsii{Wingdings 2}
 
 % Page Layout
 \usepackage[
@@ -78,7 +80,6 @@
 % Colors
 \usepackage{xcolor}
 \definecolor{tagcolor}{RGB}{100,149,237}      % Cornflower blue for tags
-\definecolor{namecolor}{RGB}{220,20,60}       % Crimson for names
 \definecolor{linkcolor}{RGB}{70,70,120}      % Steel blue for links
 \definecolor{headingcolor}{RGB}{0,0,0}     % Black
 \definecolor{tag-default}{RGB}{100,149,237}            % Cornflower blue
@@ -131,16 +132,29 @@
 % Lists
 \usepackage{enumitem}
 \setlist{nosep, leftmargin=*}
+\setlist[itemize,2]{leftmargin=2em}
+\setlist[enumerate,2]{leftmargin=2em}
+\setlist[itemize,3]{leftmargin=2em}
+\setlist[enumerate,3]{leftmargin=2em}
+\setlist[itemize,4]{leftmargin=2em}
+\setlist[enumerate,4]{leftmargin=2em}
+
+% Wingdings 2 bullets (scaled to match checkbox size: 0.7, raised 0.15ex)
+\renewcommand{\labelitemi}{\raisebox{0.15ex}{\scalebox{0.7}{{\wingdingsii\symbol{"F0E0}}}}}
+\renewcommand{\labelitemii}{\raisebox{0.15ex}{\scalebox{0.7}{{\wingdingsii\symbol{"F0DA}}}}}
+\renewcommand{\labelitemiii}{\raisebox{0.15ex}{\scalebox{0.7}{{\wingdingsii\symbol{"F0D4}}}}}
+\renewcommand{\labelitemiv}{\raisebox{0.15ex}{\scalebox{0.7}{{\wingdingsii\symbol{"F0CD}}}}}
+
+% Checkbox list environment
+\newenvironment{checkboxlist}{%
+  \begin{itemize}[leftmargin=1.1em]%
+}{%
+  \end{itemize}%
+}
 
 % Tight list support (Pandoc generates this)
 \providecommand{\tightlist}{%
   \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
-
-% Task list support with nicer boxes
-\usepackage{amssymb}
-\usepackage{pifont}
-\newcommand{\checkbox}{\ensuremath{\square}}
-\newcommand{\checkedbox}{\rlap{\ensuremath{\square}}\large\hspace{1pt}\ding{51}}
 
 % Tables
 \usepackage{longtable,booktabs,array}
@@ -224,7 +238,7 @@
 % Display name is shown in the text
 % Canonical name is used for indexing
 \newcommand{\person}[2]{%
-  \textcolor{namecolor}{\textbf{#1}}%
+  \textbf{#1}%
   \index[names]{#2}%
   \xspace%
 }

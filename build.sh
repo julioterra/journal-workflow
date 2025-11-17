@@ -63,11 +63,11 @@ pandoc "$INPUT_FILE" \
   --from=markdown \
   --to=latex \
   --template="$TEMPLATE" \
+  --lua-filter=filters/task-list-filter.lua \
   --lua-filter=filters/filter-media-links.lua \
   --lua-filter=filters/remove-object-embeds.lua \
   --lua-filter=filters/add-index-entries.lua \
   --lua-filter=filters/tag-filter.lua \
-  --lua-filter=filters/emoji-filter.lua \
   --toc \
   --toc-depth=2 \
   --number-sections \
@@ -80,7 +80,7 @@ pandoc "$INPUT_FILE" \
 
 # Step 2: First LaTeX pass (creates .idx)
 echo "🔄 Step 2: First LaTeX pass..."
-(cd "$OUTPUT_DIR" && xelatex -interaction=nonstopmode "$OUTPUT_NAME.tex" > "../$BUILD_LOG_FILE" 2>&1)
+(cd "$OUTPUT_DIR" && lualatex -interaction=nonstopmode "$OUTPUT_NAME.tex" > "../$BUILD_LOG_FILE" 2>&1)
 
 # Step 3: Build all indexes
 echo "📇 Step 3: Building indexes..."
@@ -94,7 +94,7 @@ echo "📇 Step 3: Building indexes..."
 
 # Step 4: Final LaTeX pass
 echo "🔄 Step 4: Final LaTeX pass..."
-(cd "$OUTPUT_DIR" && xelatex -interaction=nonstopmode "$OUTPUT_NAME.tex" > "../$BUILD_LOG_FILE" 2>&1)
+(cd "$OUTPUT_DIR" && lualatex -interaction=nonstopmode "$OUTPUT_NAME.tex" > "../$BUILD_LOG_FILE" 2>&1)
 
 echo "✅ Success! PDF created: $OUTPUT_FILE"
 echo "🔍 Opening PDF..."

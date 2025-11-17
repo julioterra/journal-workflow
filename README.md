@@ -18,7 +18,7 @@ journal-workflow/
 ## 🎯 Current Features
 
 ### ✅ Implemented
-- **Custom LaTeX template** with beautiful typography (Corundum Text Book font)
+- **Custom LaTeX template** with beautiful typography (Verdigris MVB Pro Text font)
 - **Print-ready dimensions** (6" × 9" book format)
 - **Six separate indexes**: Books, Definitions, Organizations, People, Projects, and Tags
 - **Tag highlighting**: All `#tags` are colored blue and indexed
@@ -28,13 +28,13 @@ journal-workflow/
 - **Capacities export processing**: Automated workflow for processing Capacities exports
 - **Character encoding fixes**: Handles UTF-8 encoding issues
 - **Clean typography**: Professional margins, headers, and footers
-- **Emoji support**: Basic emoji rendering using font fallback (see [Emoji Support](#emoji-support) section)
+- **Color emoji support**: Full color emoji rendering with LuaLaTeX and font fallback
+- **Task list checkboxes**: Markdown checkboxes render as Wingdings 2 characters
 
 ### 🚧 Coming Soon
 - Ability to handle complex tables
 - Enhanced formatting for tags
 - Output configuration via build.sh flags
-- Improved emoji support with better font coverage
 
 ## 🚀 Quick Start
 
@@ -179,9 +179,10 @@ Main build script - converts markdown to PDF.
 **What it does:**
 1. Cleans output directory (unless --keep-output specified)
 2. Runs Pandoc with all filters
-3. Runs XeLaTeX (first pass - creates .idx files)
-4. Runs makeindex on all 6 index files
-5. Runs XeLaTeX (final pass - includes indexes)
+3. Converts checkboxes to Wingdings 2 characters
+4. Runs LuaLaTeX (first pass - creates .idx files)
+5. Runs makeindex on all 6 index files
+6. Runs LuaLaTeX (final pass - includes indexes)
 
 ### process-capacities-export.sh
 Processes Capacities export zip files.
@@ -248,39 +249,46 @@ Combined preprocessing and building.
 
 ### Changing Fonts
 
-The template currently uses **Corundum Text Book**. If you don't have this font, you'll need to change it.
+The template currently uses **Verdigris MVB Pro Text**. If you don't have this font, you'll need to change it.
 
 **1. Check available fonts on your system:**
 ```bash
+# List all fonts
 fc-list : family | sort | uniq
+
+# Check if LuaLaTeX can find a specific font
+luaotfload-tool --find="Font Name"
 ```
 
-**2. Edit the template** (`templates/journal-template.tex` around line 14):
+**2. Edit the template** (`templates/journal-template.tex` around line 25):
 ```latex
-\setmainfont{Corundum Text Book}[
-  BoldFont={Corundum Text Bold}
+\setmainfont{VerdigrisMVBProText-Rg}[
+  Extension={.otf},
+  BoldFont={VerdigrisMVBProText-Bd},
+  ItalicFont={VerdigrisMVBProText-It},
+  BoldItalicFont={VerdigrisMVBProText-BdIt},
+  RawFeature={fallback=emojifallback}
 ]
 ```
 
 **3. Replace with an available font:**
 ```latex
-% Popular choices:
-\setmainfont{Palatino}          % Classic serif
-\setmainfont{Garamond}          % Elegant serif
-\setmainfont{Baskerville}       % Traditional serif
-\setmainfont{Georgia}           % Screen-friendly serif
-\setmainfont{Hoefler Text}      % macOS default
-\setmainfont{Crimson Text}      % Free Google font
-```
+% Using font name (LuaLaTeX will search)
+\setmainfont{Palatino}[RawFeature={fallback=emojifallback}]
 
-**Note:** If a font has separate files for bold/italic, specify them:
-```latex
-\setmainfont{My Font}[
-  BoldFont={My Font Bold},
-  ItalicFont={My Font Italic},
-  BoldItalicFont={My Font Bold Italic}
+% Or using filename (more reliable for some fonts)
+\setmainfont{Palatino-Roman}[
+  Extension={.ttf},
+  BoldFont={Palatino-Bold},
+  ItalicFont={Palatino-Italic},
+  BoldItalicFont={Palatino-BoldItalic},
+  RawFeature={fallback=emojifallback}
 ]
 ```
+
+**Important:** Always keep `RawFeature={fallback=emojifallback}` to maintain emoji support!
+
+**Note:** LuaLaTeX font loading differs from XeLaTeX. Adobe fonts not in the system font database don't work with LuaLaTeX.
 
 ### Changing Colors
 
@@ -288,7 +296,6 @@ Edit `templates/journal-template.tex` (around line 65):
 
 ```latex
 \definecolor{tagcolor}{RGB}{100,149,237}      % Tags (cornflower blue)
-\definecolor{namecolor}{RGB}{220,20,60}       % Names (crimson)
 \definecolor{linkcolor}{RGB}{70,70,120}       % Links (steel blue)
 \definecolor{headingcolor}{RGB}{0,0,0}        % Headings (black)
 ```
@@ -318,64 +325,116 @@ paperwidth=5in, paperheight=8in
 paperwidth=148mm, paperheight=210mm
 ```
 
-## 😀 Emoji Support
+## 😀 Emoji and Checkbox Support
 
-The workflow now includes basic emoji support! Emojis in your markdown will be rendered in the PDF where possible.
+The workflow includes full **color emoji support** using LuaLaTeX and font fallback! Emojis in your markdown will be rendered in full color in the PDF.
 
 ### How It Works
 
-The template automatically attempts to use emoji-capable fonts in this order:
-1. **Symbola** (if installed) - Best coverage for black-and-white emojis
-2. **Noto Color Emoji** (if installed) - Google's emoji font
-3. **Apple Symbols** (fallback) - Limited emoji support, but available on macOS
+The template uses LuaLaTeX with a font fallback chain:
+1. **Verdigris MVB Pro Text** - Main body font
+2. **Apple Color Emoji** - Full color emojis (macOS)
+3. **Wingdings 2** - Checkbox and bullet characters
+4. **Menlo** - Symbol fallback
 
-### Current Limitations
+This means emojis like 😀 🎉 ❤️ ✨ will render in full color!
 
-- **Not all emojis render**: The fallback fonts (especially Apple Symbols) have limited emoji coverage
-- **Black and white only**: XeLaTeX doesn't support colored emojis well
-- **Some modern emojis missing**: Newer emoji characters may not be in older fonts
+### Checkbox and Bullet Support
 
-### Improving Emoji Support
+**Markdown task lists** are fully supported with proper alignment:
 
-For better emoji coverage, install the Symbola font:
-
-**On macOS:**
-```bash
-# Download Symbola font
-curl -L https://dn-works.com/wp-content/uploads/2020/UFAS-Fonts/Symbola.zip -o /tmp/Symbola.zip
-unzip /tmp/Symbola.zip -d /tmp/
-# Install to user fonts directory
-mkdir -p ~/Library/Fonts
-cp /tmp/Symbola.ttf ~/Library/Fonts/
-# Rebuild font cache
-fc-cache -f
+```markdown
+- [x] Completed task
+- [ ] Incomplete task
+- Regular bullet item
 ```
 
-**On Linux:**
+**Checkboxes** render using Wingdings 2 characters:
+- U+F053 (checked box) - scaled to 70%, raised 0.15ex
+- U+F0A3 (unchecked box) - scaled to 70%, raised 0.15ex
+
+**Bullets** also use Wingdings 2 characters for consistency:
+- Level 1: U+F098 - scaled to 70%, raised 0.15ex
+- Level 2: U+F09C - scaled to 70%, raised 0.15ex
+- Level 3: U+F09B - scaled to 70%, raised 0.15ex
+- Level 4: U+F09A - scaled to 70%, raised 0.15ex
+
+### Font Requirements
+
+⚠️ **REQUIRED: Wingdings 2 font**
+
+**macOS:** Wingdings 2, Apple Color Emoji, and Menlo are all included with the system - everything works out of the box.
+
+**Windows:** Wingdings 2 is included with Windows - you may need to install emoji fonts separately.
+
+**Linux:** You'll need to install both Wingdings 2 and color emoji fonts:
 ```bash
-# Ubuntu/Debian
-sudo apt-get install fonts-symbola
+# Ubuntu/Debian - Install Microsoft fonts and emoji fonts
+sudo apt-get install ttf-mscorefonts-installer fonts-noto-color-emoji
 
 # Arch
-sudo pacman -S ttf-symbola
+sudo pacman -S ttf-ms-fonts noto-fonts-emoji
 ```
 
-After installing, rebuild your PDF to use the new font automatically.
+After installing fonts, rebuild the font cache:
+```bash
+fc-cache -fv
+```
+
+### Customizing Bullets and Checkboxes
+
+If you want to use different symbols or fonts for bullets/checkboxes:
+
+**1. Change the font** - Edit `templates/journal-template.tex` (around line 35):
+```latex
+% Replace Wingdings 2 with another symbol font
+\newfontfamily\wingdingsii{Wingdings 2}  % Change to your font
+```
+
+**2. Change bullet symbols** - Edit `templates/journal-template.tex` (around line 142):
+```latex
+% Wingdings 2 bullets (scaled to 0.7, raised 0.15ex)
+\renewcommand{\labelitemi}{\raisebox{0.15ex}{\scalebox{0.7}{{\wingdingsii\symbol{"F098}}}}}
+\renewcommand{\labelitemii}{\raisebox{0.15ex}{\scalebox{0.7}{{\wingdingsii\symbol{"F09C}}}}}
+% ... etc
+
+% To use standard LaTeX bullets instead:
+\renewcommand{\labelitemi}{\textbullet}
+\renewcommand{\labelitemii}{\ensuremath{\circ}}
+```
+
+**3. Change checkbox symbols** - Edit `filters/task-list-filter.lua` (around line 5):
+```lua
+-- Wingdings 2 checkbox symbols (scaled down 30%, raised 0.15ex)
+local EMPTY_BOX = '\\item[{\\raisebox{0.15ex}{\\scalebox{0.7}{\\wingdingsii\\symbol{"F0A3}}}}]'
+local CHECKED_BOX = '\\item[{\\raisebox{0.15ex}{\\scalebox{0.7}{\\wingdingsii\\symbol{"F053}}}}]'
+
+-- To use standard LaTeX symbols instead:
+-- local EMPTY_BOX = '\\item[$\\square$]'
+-- local CHECKED_BOX = '\\item[$\\boxtimes$]'
+```
+
+**4. Adjust sizing** - Change the `\scalebox{0.7}` value (0.7 = 70% of original size)
+
+**5. Adjust vertical alignment** - Change the `\raisebox{0.15ex}` value (higher = raised more)
 
 ### Testing Emoji Support
 
-A test file is provided to check which emojis render:
+A comprehensive test file is provided:
 ```bash
 ./build.sh source/emoji-test.md
 open output/emoji-test.pdf
 ```
 
-### Manual Emoji Command
+This test file includes:
+- Common emojis (smileys, gestures, hearts, nature)
+- Technical emojis (💻 🖥️ ⚙️)
+- Task list checkboxes
+- Mixed content examples
 
-For specific emoji formatting, you can use the `\emoji{}` command in LaTeX:
-```latex
-This is a manual emoji: \emoji{😀}
-```
+### Nested List Indentation
+
+Nested lists (second, third, fourth level) have 2em additional indentation per level for better visual hierarchy.
 
 ## 🐛 Troubleshooting
 
@@ -384,7 +443,7 @@ This is a manual emoji: \emoji{😀}
 brew install pandoc
 ```
 
-### "Command not found: xelatex"
+### "Command not found: lualatex"
 ```bash
 brew install --cask mactex
 # Then restart Terminal

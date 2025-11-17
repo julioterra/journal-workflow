@@ -3,14 +3,22 @@
 # preprocess-capacities.sh
 # Converts Capacities toggle structure and handles PDF images
 
-# INPUT_FILE="$1"
-
+# Parse arguments
+SKIP_DEINDENT=false
 TITLE="${1:-Journal}"
 AUTHOR="${2:-Julio Terra}"
 INPUT_FILE="${3:-source/journal.md}"
 
+# Check for --skip-deindent flag
+for arg in "$@"; do
+    if [ "$arg" = "--skip-deindent" ]; then
+        SKIP_DEINDENT=true
+    fi
+done
+
 if [ $# -eq 0 ]; then
-    echo "Usage: ./preprocess-capacities.sh <markdown-file>"
+    echo "Usage: ./preprocess-capacities.sh [title] [author] [input-file] [--skip-deindent]"
+    echo "  --skip-deindent: Skip removing 4-space indentation from toggle groups"
     exit 1
 fi
 
@@ -26,9 +34,26 @@ cp "$INPUT_FILE" "${INPUT_FILE}.bak"
 
 # Step 1: Convert structure
 sed -i '' 's/^- \(#[a-zA-Z]\)/\1/g' "$INPUT_FILE"
-sed -i '' 's/^    //' "$INPUT_FILE"
 
-# Step 1b: Handle different top-level tags
+# Step 1a: Remove 4-space indentation from Capacities toggle groups
+# NOTE: In Capacities exports, all content within toggle groups is indented with 4 spaces.
+# Removing 4 spaces from every line preserves RELATIVE indentation:
+#   - 4 spaces (top-level in toggle) → 0 spaces (top-level in markdown)
+#   - 8 spaces (nested in toggle)    → 4 spaces (nested in markdown)
+# Use --skip-deindent flag if your export doesn't have toggle-based indentation.
+if [ "$SKIP_DEINDENT" = false ]; then
+    echo "🔧 Removing toggle indentation (4 spaces from each line)..."
+    sed -i '' 's/^    //' "$INPUT_FILE"
+else
+    echo "⏭️  Skipping toggle deindentation (--skip-deindent flag set)"
+fi
+
+# Step 1b: Remove blank lines between list items
+# Capacities exports include blank lines that break Markdown list nesting
+echo "🔧 Removing blank lines between list items..."
+perl -i -0pe 's/(\n[ ]*- .*)\n\n([ ]+- )/$1\n$2/g' "$INPUT_FILE"
+
+# Step 1c: Handle different top-level tags
 # - PersonalJournal: remove entirely
 # - ToDo, FoodJournal, Grateful, WorkStuff: convert to h2 with proper spacing
 
@@ -42,7 +67,7 @@ sed -i '' 's/^#gratitude$/## Gratitude/' "$INPUT_FILE"
 sed -i '' 's/^#WorkStuff$/## Work Stuff/' "$INPUT_FILE"
 sed -i '' 's/^#ideas$/## Ideas/' "$INPUT_FILE"
 
-# Step 1c: Remove mentions from headings to avoid index issues
+# Step 1d: Remove mentions from headings to avoid index issues
 echo "🔧 Removing mentions from headings..."
 sed -i '' -E 's/^(#+ .*)\[([^]]+)\]\([^)]+\)/\1\2/g' "$INPUT_FILE"
 
@@ -70,7 +95,7 @@ FIRST_DATE=$(grep -m 1 "^# [A-Z]" "$INPUT_FILE" | sed 's/^# //')
 LAST_DATE=$(grep "^# [A-Z]" "$INPUT_FILE" | tail -1 | sed 's/^# //')
 
 # Remove old frontmatter (from first --- to second ---, inclusive)
-sed -i '' '1{/^---$/!b};:a;/^---$/!{N;ba};d' "$INPUT_FILE"
+sed -i '' '1{/^---$/!b};:a;/^---$/!{N;ba;};d' "$INPUT_FILE"
 
 # Create new frontmatter
 cat > temp_frontmatter.md << EOF
