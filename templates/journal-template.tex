@@ -310,7 +310,16 @@ $body$
 \makeatother
 
 % Ensure index starts on a right (odd) page
-\cleardoublepage
+% Clear to next odd page, making blank pages empty (no footer)
+\clearpage
+\ifodd\value{page}
+  % Already on odd - do nothing
+\else
+  % On even - add blank odd page without footer
+  \thispagestyle{empty}
+  \mbox{}
+  \clearpage
+\fi
 
 % Manually combine all indexes into one continuous section
 \makeatletter
