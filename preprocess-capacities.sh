@@ -8,6 +8,7 @@ SKIP_DEINDENT=false
 TITLE="${1:-Journal}"
 AUTHOR="${2:-Julio Terra}"
 INPUT_FILE="${3:-source/journal.md}"
+VOLUME="${4:-Volume 1}"
 
 # Check for --skip-deindent flag
 for arg in "$@"; do
@@ -17,7 +18,7 @@ for arg in "$@"; do
 done
 
 if [ $# -eq 0 ]; then
-    echo "Usage: ./preprocess-capacities.sh [title] [author] [input-file] [--skip-deindent]"
+    echo "Usage: ./preprocess-capacities.sh [title] [author] [input-file] [volume] [--skip-deindent]"
     echo "  --skip-deindent: Skip removing 4-space indentation from toggle groups"
     exit 1
 fi
@@ -103,6 +104,7 @@ cat > temp_frontmatter.md << EOF
 title: $TITLE
 author: $AUTHOR
 dates: $FIRST_DATE - $LAST_DATE
+volume: $VOLUME
 ---
 
 EOF

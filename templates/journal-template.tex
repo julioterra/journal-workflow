@@ -279,6 +279,12 @@ $endif$
 $if(date)$
 \date{$date$}
 $endif$
+$if(dates)$
+\newcommand{\dates}{$dates$}
+$endif$
+$if(volume)$
+\newcommand{\volume}{$volume$}
+$endif$
 
 % ============================================================================
 % DOCUMENT
@@ -289,9 +295,41 @@ $endif$
 % Front Matter
 \frontmatter
 
+% Custom title page
 $if(title)$
-\date{} 
-\maketitle
+\begin{titlepage}
+\centering
+
+\vspace*{\fill}
+
+% Title - very large bold
+{\Huge\bfseries $title$\par}
+\vspace{0.5em}
+
+% Author - medium non-bold
+$if(author)$
+{\LARGE $author$\par}
+%\vspace{4em}
+$endif$
+
+
+\vspace*{\fill}
+\vspace*{\fill}
+
+% Volume - medium bold
+$if(volume)$
+{\large\itshape\bfseries \volume\par}
+\vspace{-0.4em}
+$endif$
+
+% Date Range - large bold
+$if(dates)$
+{\large\itshape \dates\par}
+\vspace{4em}
+$endif$
+
+
+\end{titlepage}
 $endif$
 
 $if(abstract)$
