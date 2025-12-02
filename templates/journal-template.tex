@@ -182,8 +182,11 @@
 \usepackage{longtable,booktabs,array}
 \usepackage{calc}
 \usepackage{tabularx}
+\usepackage{pdflscape}  % For landscape table rotation
 \setlength{\LTpre}{0pt}
 \setlength{\LTpost}{0pt}
+% Define 'none' counter for uncaptioned tables (Pandoc compatibility)
+\newcounter{none}
 
 % Graphics with smart sizing
 \usepackage{graphicx}

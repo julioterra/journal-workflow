@@ -116,14 +116,13 @@ rm temp_frontmatter.md
 
 echo "  ✓ Frontmatter updated: $FIRST_DATE - $LAST_DATE"
 
-# Step 4: Find and convert PDFs
-echo "🖼️  Converting PDFs to JPG..."
-
 # Step 4: Find and convert PDFs, handle multi-page
 echo "🖼️  Converting PDFs to JPG..."
 
 # First pass: convert all PDFs (handle both with and without assets/ prefix)
-grep -o '!\[.*\]([^)]*\.pdf)' "$INPUT_FILE" | grep -o '[^(]*\.pdf' | sort -u | while read pdf_path; do
+# Use .* to match paths with parentheses in filenames
+# Match from ]( to .pdf) to avoid capturing parentheses in alt text
+grep -oE '!\[.*\]\(.*\.pdf\)' "$INPUT_FILE" | grep -oE '\]\(.*\.pdf\)' | sed 's/^..//' | sed 's/)$//' | sort -u | while read pdf_path; do
     pdf_path=$(echo "$pdf_path" | sed 's/%20/ /g')
     
     if [ -f "$pdf_path" ]; then
@@ -140,9 +139,11 @@ done
 
 # Second pass: update markdown references
 # Handle both single-page (file.jpg) and multi-page (file-0.jpg, file-1.jpg, etc.)
-grep -n '!\[.*\]([^)]*\.pdf)' "$INPUT_FILE" | while IFS=: read line_num full_line; do
+# Use .* to match paths with parentheses in filenames
+grep -nE '!\[.*\]\(.*\.pdf\)' "$INPUT_FILE" | while IFS=: read line_num full_line; do
     # Extract the PDF path (with or without assets/ prefix)
-    pdf_ref=$(echo "$full_line" | grep -o '[^(]*\.pdf' | sed 's/%20/ /g')
+    # Match from ]( to .pdf) to avoid capturing parentheses in alt text
+    pdf_ref=$(echo "$full_line" | grep -oE '\]\(.*\.pdf\)' | sed 's/^..//' | sed 's/)$//' | sed 's/%20/ /g')
     jpg_base="${pdf_ref%.pdf}"
     
     # Check if it's multi-page
@@ -170,17 +171,12 @@ grep -n '!\[.*\]([^)]*\.pdf)' "$INPUT_FILE" | while IFS=: read line_num full_lin
         alt_text=$(echo "$full_line" | sed 's/.*!\[\([^]]*\)\].*/\1/')
         jpg_ref=$(echo "$pdf_ref" | sed 's/ /%20/g')
         replacement="![${alt_text} (PDF)](${jpg_ref%.pdf}.jpg)"
-        escaped_line=$(echo "$full_line" | sed 's/[\/&]/\\&/g' | sed 's/\[/\\[/g' | sed 's/\]/\\]/g' | sed 's/\*/\\*/g')
-        sed -i '' "${line_num}s|${escaped_line}|${replacement}|" "$INPUT_FILE"
+        # Replace entire line by line number (avoid pattern matching issues with special chars)
+        sed -i '' "${line_num}s|.*|${replacement}|" "$INPUT_FILE"
     fi
 done
 
-echo "✅ Complete! Backup: ${INPUT_FILE}.bak"
-
-# Step 5: Update markdown to reference JPGs (handle both with and without assets/ prefix)
-sed -i '' 's/\(!\[.*\]([^)]*\)\.pdf)/\1.jpg)/g' "$INPUT_FILE"
-
-# Step 6: Add blank lines before and after images for spacing
+# Step 5: Add blank lines before and after images for spacing
 sed -i '' 's/^\(!\[.*\].*\)$/\n\1\n/' "$INPUT_FILE"
 
 echo "✅ Complete! Backup: ${INPUT_FILE}.bak"

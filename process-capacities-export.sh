@@ -68,6 +68,22 @@ echo "  Extracting..."
 unzip -q -o -X "$ZIP_FILE" -d "$EXPORT_DIR"
 echo -e "${GREEN}  ✓ Extracted successfully${NC}"
 
+# Check if content is in a subdirectory and flatten if needed
+# Some Capacities exports nest everything in a folder named after the zip file
+SUBDIRS=$(find "$EXPORT_DIR" -mindepth 1 -maxdepth 1 -type d ! -name "__MACOSX" ! -name ".*")
+SUBDIR_COUNT=$(echo "$SUBDIRS" | grep -c '^' || true)
+
+if [ "$SUBDIR_COUNT" -eq 1 ] && [ -d "$SUBDIRS/DailyNotes" ]; then
+    echo "  Flattening nested export structure..."
+    # Move all contents up one level (including hidden files)
+    shopt -s dotglob  # Enable matching hidden files
+    mv "$SUBDIRS"/* "$EXPORT_DIR/" 2>/dev/null || true
+    shopt -u dotglob  # Disable matching hidden files
+    # Remove the now-empty subdirectory
+    rm -rf "$SUBDIRS"
+    echo -e "${GREEN}  ✓ Flattened export structure${NC}"
+fi
+
 # ============================================================================
 # STEP 0.5: Clear Previous Output
 # ============================================================================
@@ -109,10 +125,11 @@ EOF
 # Find and sort all daily note files
 daily_note_count=0
 if [ -d "$EXPORT_DIR/DailyNotes" ]; then
-    find "$EXPORT_DIR/DailyNotes" -name "*.md" -type f | sort | while read file; do
+    # Use process substitution to avoid subshell issues
+    while IFS= read -r file; do
         filename=$(basename "$file" .md)
         echo "  + $filename"
-        
+
         # Extract date from filename and format as heading
         if [[ $filename =~ ^([0-9]{4})-([0-9]{2})-([0-9]{2})$ ]]; then
             # Convert YYYY-MM-DD to readable format
@@ -121,14 +138,14 @@ if [ -d "$EXPORT_DIR/DailyNotes" ]; then
         else
             echo -e "\n# $filename\n" >> "$OUTPUT_FILE"
         fi
-        
+
         # Skip front matter and append content
         awk '/^---$/ {p++; next} p >= 2' "$file" >> "$OUTPUT_FILE"
         echo "" >> "$OUTPUT_FILE"
-        
+
         daily_note_count=$((daily_note_count + 1))
-    done
-    
+    done < <(find "$EXPORT_DIR/DailyNotes" -name "*.md" -type f | sort)
+
     echo -e "${GREEN}  ✓ Combined $daily_note_count daily notes${NC}"
 else
     echo -e "${RED}  ⚠ Warning: DailyNotes directory not found${NC}"
@@ -143,7 +160,8 @@ echo -e "${GREEN}📄 Step 2: Processing referenced PDFs...${NC}"
 pdf_count=0
 if [ -d "$EXPORT_DIR/PDFs/Media" ]; then
     # Extract all PDF filenames referenced in the journal
-    referenced_pdfs=$(grep -o 'PDFs/Media/[^)]*\.pdf' "$OUTPUT_FILE" | sed 's/.*\///' | sort -u)
+    # Use grep -oE with .* to match PDF paths that may contain parentheses
+    referenced_pdfs=$(grep -oE 'PDFs/Media/.*\.pdf\)' "$OUTPUT_FILE" | sed 's/)$//' | sed 's/.*\///' | sort -u)
     
     if [ -z "$referenced_pdfs" ]; then
         echo -e "${YELLOW}  ⚠ No PDF references found in journal${NC}"
@@ -199,7 +217,8 @@ echo -e "${GREEN}🖼️  Step 3: Copying referenced images...${NC}"
 image_count=0
 if [ -d "$EXPORT_DIR/Images/Media" ]; then
     # Extract all image filenames referenced in the journal
-    referenced_images=$(grep -oE 'Images/Media/[^)]*\.(png|jpg|jpeg|gif)' "$OUTPUT_FILE" | sed 's|.*\/||' | sort -u)
+    # Use .* to match image paths that may contain parentheses
+    referenced_images=$(grep -oE 'Images/Media/.*\.(png|jpg|jpeg|gif)\)' "$OUTPUT_FILE" | sed 's/)$//' | sed 's|.*\/||' | sort -u)
     
     if [ -z "$referenced_images" ]; then
         echo -e "${YELLOW}  ⚠ No image references found in journal${NC}"
