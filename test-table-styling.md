@@ -9,6 +9,8 @@ volume: Test Volume
 
 ## Test 1: Small Table (3 cols, 4 rows, minimal content)
 
+**Expected behavior**: Portrait orientation, normal font size (9pt), regular page flow
+
 Table: Product Pricing
 
 | Product | Price | Stock |
@@ -17,11 +19,11 @@ Table: Product Pricing
 | Widget B | $15 | 50 |
 | Widget C | $20 | 75 |
 
-**Expected behavior**: Portrait, normal font size (no reduction)
-
 ---
 
 ## Test 2: Small Table with Dense Content (3 cols, 5 rows, lots of text)
+
+**Expected behavior**: Landscape orientation (dense content, 2+ cols), 9pt font, isolated on own page with page breaks before/after, no footers
 
 Table: Project Status Updates
 
@@ -32,11 +34,11 @@ Table: Project Status Updates
 | Database Migration | Completed successfully last week with minimal downtime and no data loss. | Monitor performance metrics, document migration process, train team on new system, and schedule follow-up review in two weeks. |
 | API Integration | Starting next month after resource allocation is confirmed and requirements are finalized. | Review API documentation thoroughly, set up development environment, coordinate with external vendor, and establish testing protocols. |
 
-**Expected behavior**: Portrait, possibly reduced font if content density triggers it
-
 ---
 
 ## Test 3: Medium Table (5 cols, 6 rows, moderate content)
+
+**Expected behavior**: Landscape orientation (5+ cols), 8pt font, tight column spacing (1.5pt), no footers
 
 Table: Employee Performance Review Summary
 
@@ -48,11 +50,11 @@ Table: Employee Performance Review Summary
 | David Lee | Engineering | 4.0 | 4.1 | Steady improvement, needs mentoring |
 | Emma Wilson | Marketing | 4.6 | 4.5 | Strong creative skills, valuable insights |
 
-**Expected behavior**: Landscape (5+ cols), reduced font size (8pt)
-
 ---
 
 ## Test 4: Large Table with Dense Content (7 cols, 8 rows)
+
+**Expected behavior**: Landscape orientation (7 cols), 8pt font, very tight column spacing (1.5pt), no footers
 
 Table: Studio Shelf Configuration Analysis
 
@@ -66,11 +68,11 @@ Table: Studio Shelf Configuration Analysis
 | Storage Room | 300 | 64″ + 56″ = 305 cm total available | 305 cm actual usage | 5 bays configured | 305 cm total width | 6 vertical standards |
 | Office Space | 240 | 56″ + 41″ = 246 cm total available | 246 cm actual usage | 4 bays configured | 244 cm total width | 5 vertical standards |
 
-**Expected behavior**: Landscape (7 cols), reduced font (possibly 7pt due to density)
-
 ---
 
 ## Test 5: Multi-Page Table (6 cols, 30 rows) - Tests pagination
+
+**Expected behavior**: Landscape orientation (6 cols), 7pt font (30 rows), spans multiple pages, no footers on ANY landscape page
 
 Table: Monthly Sales Data by Region and Product Category
 
@@ -107,11 +109,11 @@ Table: Monthly Sales Data by Region and Product Category
 | May | East | Electronics | 175,000 | 635 | 8.0 |
 | May | East | Furniture | 95,000 | 145 | 8.0 |
 
-**Expected behavior**: Landscape (6 cols), spans multiple pages, reduced font, test vertical centering behavior
-
 ---
 
 ## Test 6: Wide Table with Minimal Rows (8 cols, 3 rows)
+
+**Expected behavior**: Landscape orientation (8 cols), 8pt font, very tight column spacing (1.5pt), no footers
 
 Table: System Configuration Matrix
 
@@ -119,8 +121,6 @@ Table: System Configuration Matrix
 |:-------|:---|:----------|:---------|:-------------|:--------|:-------|:-------|
 | PROD-01 | Ubuntu 22.04 | 16 | 64 | 2.0 | 10Gbps | Daily | Active |
 | PROD-02 | Ubuntu 22.04 | 32 | 128 | 4.0 | 10Gbps | Daily | Active |
-
-**Expected behavior**: Landscape (8 cols), test vertical centering on page with few rows
 
 ---
 

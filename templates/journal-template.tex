@@ -34,8 +34,8 @@
 \setmonofont[Scale=0.9]{Menlo}
 \newfontfamily\wingdingsii{Wingdings 2}
 
-% Table font - using Helvetica Neue (clean, modern, readable)
-% Using the already-defined sans font for tables
+% Table font - using Helvetica Neue (clean, modern, reliable with all glyphs)
+% Note: Host Grotesk was tested but has missing glyph issues with quotation marks
 \let\tablefont\sffamily
 
 % Page Layout
@@ -187,10 +187,15 @@
 \usepackage{calc}
 \usepackage{tabularx}
 \usepackage{pdflscape}  % For landscape table rotation
+\usepackage[table]{xcolor}  % For zebra striping
 \setlength{\LTpre}{0pt}
 \setlength{\LTpost}{0pt}
 % Define 'none' counter for uncaptioned tables (Pandoc compatibility)
 \newcounter{none}
+
+% Define colors for zebra striping (very subtle)
+\definecolor{tablerowlight}{RGB}{255,255,255}  % White
+\definecolor{tablerowdark}{RGB}{248,248,248}   % Very light gray
 
 % Graphics with smart sizing
 \usepackage{graphicx}
