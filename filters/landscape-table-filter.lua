@@ -1,6 +1,43 @@
 -- landscape-table-filter.lua
 -- Applies smart styling to tables: landscape rotation, font switching, and dynamic sizing
 
+-- Global variables for page dimensions (set by Meta function)
+local page_width_inches = 6.0  -- Default: 6 inches
+local page_height_inches = 9.0  -- Default: 9 inches
+
+-- Helper function to parse dimension strings like "6in", "7.5in", "8.5in"
+-- Returns numeric value in inches
+local function parse_dimension(dim_str)
+  if not dim_str then return nil end
+  dim_str = tostring(dim_str)
+  local num = dim_str:match("^([%d%.]+)")
+  if num then
+    return tonumber(num)
+  end
+  return nil
+end
+
+-- Meta function to capture page dimensions from metadata
+function Meta(meta)
+  if meta.paperwidth then
+    local width_str = pandoc.utils.stringify(meta.paperwidth)
+    local width = parse_dimension(width_str)
+    if width then
+      page_width_inches = width
+    end
+  end
+
+  if meta.paperheight then
+    local height_str = pandoc.utils.stringify(meta.paperheight)
+    local height = parse_dimension(height_str)
+    if height then
+      page_height_inches = height
+    end
+  end
+
+  return meta
+end
+
 -- Helper function to estimate content density in a table
 -- Returns a weighted score combining average and max cell content
 -- Weights max content more heavily (60%) as it's a better indicator of needed space
@@ -145,14 +182,14 @@ local function calculate_column_widths(el, column_count)
     total_chars = total_chars + col_chars[i]
   end
 
-  -- If no content, return equal widths
+  -- If no content, return equal widths and natural width of 1.0
   if total_chars == 0 then
     local equal_width = 1.0 / column_count
     local widths = {}
     for i = 1, column_count do
       widths[i] = equal_width
     end
-    return widths
+    return widths, 1.0  -- natural_width = 1.0 (full width needed)
   end
 
   -- Calculate raw percentages
@@ -182,6 +219,13 @@ local function calculate_column_widths(el, column_count)
     col_min_widths[i] = math.max(0.08, content_min)
     -- Cap at 25% to prevent one long header from dominating
     col_min_widths[i] = math.min(0.25, col_min_widths[i])
+  end
+
+  -- Calculate natural width (sum of minimum widths before adjustment)
+  -- This represents the minimum width the table actually needs
+  local natural_width = 0
+  for i = 1, column_count do
+    natural_width = natural_width + col_min_widths[i]
   end
 
   -- Apply per-column minimum width constraints
@@ -242,7 +286,7 @@ local function calculate_column_widths(el, column_count)
     widths[column_count] = widths[column_count] + (1.0 - sum)
   end
 
-  return widths
+  return widths, natural_width
 end
 
 function Table(el)
@@ -270,28 +314,46 @@ function Table(el)
   local content_density = estimate_content_density(el)
 
   -- Calculate optimal column widths based on per-column content density
-  local column_widths = calculate_column_widths(el, column_count)
+  -- Returns both the widths (normalized to 1.0) and natural_width (sum of minimums before normalization)
+  local column_widths, natural_width = calculate_column_widths(el, column_count)
 
   -- Use scriptsize (7pt) for all tables for consistency
   local font_size = "scriptsize"  -- ~7pt
 
   -- Determine if table should be in landscape based on columns and content density
-  -- Logic:
-  --   6+ columns: Always landscape (too wide for portrait)
-  --   3-5 columns: Landscape if content density > threshold (needs width for dense content)
-  --   1-2 columns: Always portrait (narrow enough to fit)
-  local density_threshold = 60  -- Weighted score threshold for landscape
+  -- Logic scales with page size:
+  --   Density threshold scales with page width (60 at 6", 50 at 5", 70 at 7", etc.)
+  --   Max portrait columns based on page width (~1.2" per column, so 5" = 4 cols, 6" = 5 cols, 7" = 5 cols, 8.5" = 7 cols)
+  --   Tables with columns > max: Always landscape
+  --   Tables with 3 to max columns: Landscape if content density > threshold
+  --   Tables with 1-2 columns: Always portrait
+
+  -- Scale density threshold based on page width (baseline: 60 at 6")
+  local density_threshold = 60 * (page_width_inches / 6.0)
+
+  -- Calculate max portrait columns based on page width
+  -- Rule of thumb: ~1.2" per column minimum
+  local max_portrait_columns = math.floor(page_width_inches / 1.2)
+
   local use_landscape = false
 
-  if column_count >= 6 then
+  if column_count > max_portrait_columns then
     -- Wide tables always landscape
     use_landscape = true
-  elseif column_count >= 3 and column_count <= 5 then
+  elseif column_count >= 3 and column_count <= max_portrait_columns then
     -- Medium width: check content density
     use_landscape = content_density > density_threshold
   else
     -- 1-2 columns: always portrait
     use_landscape = false
+  end
+
+  -- Smart sizing: Only apply width scaling to LANDSCAPE tables on pages >= 6"
+  -- Portrait tables always use full width
+  -- If natural_width < 1.0, the table doesn't need full page width
+  local table_width_scale = 1.0
+  if use_landscape and page_width_inches >= 6.0 and natural_width < 1.0 then
+    table_width_scale = natural_width
   end
 
   -- Build the LaTeX wrapper
@@ -386,6 +448,19 @@ function Table(el)
   -- Apply dynamic column widths based on content density
   -- Replace Pandoc's default widths with calculated optimal widths
   -- Pandoc uses format: p{(\linewidth - N\tabcolsep) * \real{0.XXXX}}
+
+  -- First, apply table width scaling if needed
+  if table_width_scale < 1.0 then
+    -- Replace \linewidth with scaled version, but only in column specifications
+    -- Pattern: (\linewidth - N\tabcolsep) where N is a number
+    local scale_str = string.format("%.4f", table_width_scale)
+    table_latex = table_latex:gsub('%(\\linewidth %- (%d+)\\tabcolsep%)',
+      function(n)
+        return '(' .. scale_str .. '\\linewidth - ' .. n .. '\\tabcolsep)'
+      end)
+  end
+
+  -- Then apply per-column width adjustments
   local col_idx = 1
   table_latex = table_latex:gsub('\\real{(0%.[0-9]+)}', function(old_width)
     if col_idx <= column_count and column_widths[col_idx] then
@@ -505,3 +580,9 @@ end
 function HorizontalRule(el)
   return {}
 end
+
+-- Return filter with explicit order: Meta must run before Table
+return {
+  { Meta = Meta },
+  { Table = Table, HorizontalRule = HorizontalRule }
+}
