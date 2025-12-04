@@ -399,10 +399,7 @@ function Table(el)
   -- Build the LaTeX wrapper
   local blocks = {}
 
-  -- Add space before table to separate from preceding text
-  table.insert(blocks, pandoc.RawBlock('latex', '\\vspace{1.5\\baselineskip}'))
-
-  -- Start table environment with font changes and spacing adjustments
+  -- Prepare table font and spacing setup
   local table_setup = '{\\tablefont\\' .. font_size
   -- Use standard row spacing for all tables - let LaTeX handle wrapping naturally
   table_setup = table_setup .. '\\renewcommand{\\arraystretch}{1.8}'
@@ -416,8 +413,6 @@ function Table(el)
   -- Center all tables
   table_setup = table_setup .. '\\centering'
 
-  table.insert(blocks, pandoc.RawBlock('latex', table_setup))
-
   -- Determine if table is likely single-page (for vertical centering)
   -- Multi-page if: 10+ rows AND (6+ cols OR dense content)
   local is_dense = content_density > density_threshold
@@ -425,6 +420,12 @@ function Table(el)
 
   -- Add landscape environment for wide tables or dense tables
   if use_landscape then
+    -- Defer landscape to next page break so content before table can continue
+    table.insert(blocks, pandoc.RawBlock('latex', '\\afterpage{'))
+    -- Add space before table to separate from preceding text
+    table.insert(blocks, pandoc.RawBlock('latex', '\\vspace{1.5\\baselineskip}'))
+    -- Start table environment with font changes inside afterpage
+    table.insert(blocks, pandoc.RawBlock('latex', table_setup))
     table.insert(blocks, pandoc.RawBlock('latex', '\\begin{landscape}'))
     -- Remove footers on all landscape pages (including multi-page tables)
     table.insert(blocks, pandoc.RawBlock('latex', '\\pagestyle{empty}'))
@@ -436,6 +437,10 @@ function Table(el)
 
     -- Center the table horizontally in landscape mode
     table.insert(blocks, pandoc.RawBlock('latex', '\\centering'))
+  else
+    -- For portrait tables, add spacing and font setup normally
+    table.insert(blocks, pandoc.RawBlock('latex', '\\vspace{1.5\\baselineskip}'))
+    table.insert(blocks, pandoc.RawBlock('latex', table_setup))
   end
 
   -- Convert table to LaTeX and add vertical rules between columns
@@ -605,10 +610,14 @@ function Table(el)
     table.insert(blocks, pandoc.RawBlock('latex', '\\end{landscape}'))
     -- Restore page style after landscape
     table.insert(blocks, pandoc.RawBlock('latex', '\\pagestyle{fancy}'))
+    -- Close font environment (inside afterpage)
+    table.insert(blocks, pandoc.RawBlock('latex', '}'))
+    -- Close afterpage
+    table.insert(blocks, pandoc.RawBlock('latex', '}'))
+  else
+    -- Close font environment for portrait tables
+    table.insert(blocks, pandoc.RawBlock('latex', '}'))
   end
-
-  -- Close font environment
-  table.insert(blocks, pandoc.RawBlock('latex', '}'))
 
   -- Add space after table to separate from following text
   table.insert(blocks, pandoc.RawBlock('latex', '\\vspace{1.5\\baselineskip}'))

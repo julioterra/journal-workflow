@@ -150,7 +150,7 @@ Table: 6.0 - Weekly Task Status
 
 | Mon | Tue | Wed | Thu | Fri | Sat |
 |:----|:----|:----|:----|:----|:----|
-| ✓   | ✓   | ✓   | ✗   | ✓   | -   |
+| Yes | Yes | Yes | No  | Yes | -   |
 | 3   | 4   | 2   | 0   | 5   | 0   |
 | OK  | OK  | OK  | Skip| OK  | Off |
 | 8am | 9am | 8am | -   | 7am | -   |
