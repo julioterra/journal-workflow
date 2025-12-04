@@ -68,6 +68,147 @@ local function is_numeric_column(el, col_index)
   return total_count > 0 and (numeric_count / total_count) >= 0.75
 end
 
+-- Helper function to calculate optimal column widths based on per-column content density
+-- Returns array of width percentages (as decimals, e.g., 0.25 for 25%)
+local function calculate_column_widths(el, column_count)
+  -- Array to store character counts per column
+  local col_chars = {}
+  local col_max_chars = {}
+  local col_longest_word = {}
+
+  -- Initialize arrays
+  for i = 1, column_count do
+    col_chars[i] = 0
+    col_max_chars[i] = 0
+    col_longest_word[i] = 0
+  end
+
+  -- Count characters in each column and track longest word
+  if el.bodies then
+    for _, body in ipairs(el.bodies) do
+      for _, row in ipairs(body.body) do
+        for col_idx, cell in ipairs(row.cells) do
+          if col_idx <= column_count then
+            local cell_text = pandoc.utils.stringify(cell.contents)
+            local char_count = #cell_text
+            col_chars[col_idx] = col_chars[col_idx] + char_count
+
+            -- Track max cell length for this column
+            if char_count > col_max_chars[col_idx] then
+              col_max_chars[col_idx] = char_count
+            end
+
+            -- Find longest word in this cell
+            for word in cell_text:gmatch("%S+") do
+              local word_len = #word
+              if word_len > col_longest_word[col_idx] then
+                col_longest_word[col_idx] = word_len
+              end
+            end
+          end
+        end
+      end
+    end
+  end
+
+  -- Calculate total characters across all columns
+  local total_chars = 0
+  for i = 1, column_count do
+    -- Weight: 75% total chars + 25% max char
+    -- Favors columns with consistently more content over columns with one long cell
+    col_chars[i] = (0.75 * col_chars[i]) + (0.25 * col_max_chars[i])
+    total_chars = total_chars + col_chars[i]
+  end
+
+  -- If no content, return equal widths
+  if total_chars == 0 then
+    local equal_width = 1.0 / column_count
+    local widths = {}
+    for i = 1, column_count do
+      widths[i] = equal_width
+    end
+    return widths
+  end
+
+  -- Calculate raw percentages
+  local widths = {}
+  for i = 1, column_count do
+    widths[i] = col_chars[i] / total_chars
+  end
+
+  -- Calculate per-column minimum widths based on longest word
+  -- Estimate: assume ~80 characters fit comfortably in full linewidth
+  -- Add small buffer (2 chars) and use absolute floor of 8%
+  local col_min_widths = {}
+  for i = 1, column_count do
+    local word_based_min = (col_longest_word[i] + 2) / 80
+    -- Use max of word-based minimum and absolute floor of 8%
+    col_min_widths[i] = math.max(0.08, word_based_min)
+    -- Cap at 20% to prevent one long word from dominating
+    col_min_widths[i] = math.min(0.20, col_min_widths[i])
+  end
+
+  -- Apply per-column minimum width constraints
+  local needs_adjustment = true
+  local max_iterations = 10  -- Prevent infinite loops
+  local iteration = 0
+
+  while needs_adjustment and iteration < max_iterations do
+    needs_adjustment = false
+    iteration = iteration + 1
+
+    -- Find columns below their minimum
+    local below_min = {}
+    local below_min_total = 0
+    local above_min = {}
+    local above_min_total = 0
+
+    for i = 1, column_count do
+      if widths[i] < col_min_widths[i] then
+        table.insert(below_min, i)
+        below_min_total = below_min_total + (col_min_widths[i] - widths[i])
+        needs_adjustment = true
+      else
+        table.insert(above_min, i)
+        above_min_total = above_min_total + widths[i]
+      end
+    end
+
+    if needs_adjustment then
+      -- Set below-minimum columns to their minimum
+      for _, i in ipairs(below_min) do
+        widths[i] = col_min_widths[i]
+      end
+
+      -- Redistribute the taken space from above-minimum columns proportionally
+      if #above_min > 0 and above_min_total > 0 then
+        local taken_space = 0
+        for _, i in ipairs(below_min) do
+          taken_space = taken_space + col_min_widths[i]
+        end
+        local remaining = 1.0 - taken_space
+
+        for _, i in ipairs(above_min) do
+          widths[i] = (widths[i] / above_min_total) * remaining
+        end
+      end
+    end
+  end
+
+  -- Ensure widths sum to 1.0 (handle rounding errors)
+  local sum = 0
+  for i = 1, column_count do
+    sum = sum + widths[i]
+  end
+
+  -- Adjust last column to make total exactly 1.0
+  if sum > 0 and sum ~= 1.0 then
+    widths[column_count] = widths[column_count] + (1.0 - sum)
+  end
+
+  return widths
+end
+
 function Table(el)
   -- Count columns - support both new (Pandoc 2.10+) and old table formats
   local column_count = 0
@@ -91,6 +232,9 @@ function Table(el)
 
   -- Estimate content density (weighted: 40% avg + 60% max cell chars)
   local content_density = estimate_content_density(el)
+
+  -- Calculate optimal column widths based on per-column content density
+  local column_widths = calculate_column_widths(el, column_count)
 
   -- Use scriptsize (7pt) for all tables for consistency
   local font_size = "scriptsize"  -- ~7pt
@@ -200,14 +344,19 @@ function Table(el)
   table_latex = table_latex:gsub('\\midrule\\noalign{}', '\\hline')
   table_latex = table_latex:gsub('\\bottomrule\\noalign{}', '\\hline')
 
-  -- Adjust column widths for 5-column tables to give last column more space
-  if column_count == 5 then
-    -- Redistribute widths: make last column wider, narrow score columns
-    table_latex = table_latex:gsub('0%.1333%}', '0.12}')  -- Name: 13.33% -> 12%
-    table_latex = table_latex:gsub('0%.2667%}', '0.22}')  -- Department: 26.67% -> 22%
-    table_latex = table_latex:gsub('0%.2222%}', '0.12}')  -- Q1/Q2 Scores: 22.22% -> 12% each
-    table_latex = table_latex:gsub('0%.1556%}', '0.40}')  -- Notes: 15.56% -> 40%
-  end
+  -- Apply dynamic column widths based on content density
+  -- Replace Pandoc's default widths with calculated optimal widths
+  -- Pandoc uses format: p{(\linewidth - N\tabcolsep) * \real{0.XXXX}}
+  local col_idx = 1
+  table_latex = table_latex:gsub('\\real{(0%.[0-9]+)}', function(old_width)
+    if col_idx <= column_count and column_widths[col_idx] then
+      -- Format width with 4 decimal places for precision
+      local new_width = string.format("%.4f", column_widths[col_idx])
+      col_idx = col_idx + 1
+      return '\\real{' .. new_width .. '}'
+    end
+    return '\\real{' .. old_width .. '}'
+  end)
 
   -- Fix header row minipages (remove them as they interfere with alignment)
   table_latex = table_latex:gsub('\\begin{minipage}%[b%]{\\linewidth}\\raggedright\n', '')
