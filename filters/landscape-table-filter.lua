@@ -75,12 +75,37 @@ local function calculate_column_widths(el, column_count)
   local col_chars = {}
   local col_max_chars = {}
   local col_longest_word = {}
+  local col_header_chars = {}
+  local col_header_longest_word = {}
 
   -- Initialize arrays
   for i = 1, column_count do
     col_chars[i] = 0
     col_max_chars[i] = 0
     col_longest_word[i] = 0
+    col_header_chars[i] = 0
+    col_header_longest_word[i] = 0
+  end
+
+  -- Analyze header content first
+  if el.head and el.head.rows then
+    for _, row in ipairs(el.head.rows) do
+      for col_idx, cell in ipairs(row.cells) do
+        if col_idx <= column_count then
+          local cell_text = pandoc.utils.stringify(cell.contents)
+          local char_count = #cell_text
+          col_header_chars[col_idx] = col_header_chars[col_idx] + char_count
+
+          -- Find longest word in header
+          for word in cell_text:gmatch("%S+") do
+            local word_len = #word
+            if word_len > col_header_longest_word[col_idx] then
+              col_header_longest_word[col_idx] = word_len
+            end
+          end
+        end
+      end
+    end
   end
 
   -- Count characters in each column and track longest word
@@ -136,16 +161,27 @@ local function calculate_column_widths(el, column_count)
     widths[i] = col_chars[i] / total_chars
   end
 
-  -- Calculate per-column minimum widths based on longest word
+  -- Calculate per-column minimum widths based on longest word and header content
   -- Estimate: assume ~80 characters fit comfortably in full linewidth
-  -- Add small buffer (2 chars) and use absolute floor of 8%
+  -- Consider both body content and headers to avoid wrapped headers
   local col_min_widths = {}
   for i = 1, column_count do
-    local word_based_min = (col_longest_word[i] + 2) / 80
-    -- Use max of word-based minimum and absolute floor of 8%
-    col_min_widths[i] = math.max(0.08, word_based_min)
-    -- Cap at 20% to prevent one long word from dominating
-    col_min_widths[i] = math.min(0.20, col_min_widths[i])
+    -- Body-based minimum (longest word + buffer)
+    local body_min = (col_longest_word[i] + 2) / 80
+
+    -- Header-based minimum: try to fit entire header on one line if short
+    -- If header is longer, ensure at least longest word + buffer fits
+    local header_total_min = col_header_chars[i] / 80
+    local header_word_min = (col_header_longest_word[i] + 3) / 80
+    local header_min = math.max(header_total_min, header_word_min)
+
+    -- Use the maximum of body and header requirements
+    local content_min = math.max(body_min, header_min)
+
+    -- Use max of content-based minimum and absolute floor of 8%
+    col_min_widths[i] = math.max(0.08, content_min)
+    -- Cap at 25% to prevent one long header from dominating
+    col_min_widths[i] = math.min(0.25, col_min_widths[i])
   end
 
   -- Apply per-column minimum width constraints
@@ -361,6 +397,73 @@ function Table(el)
   -- Fix header row minipages (remove them as they interfere with alignment)
   table_latex = table_latex:gsub('\\begin{minipage}%[b%]{\\linewidth}\\raggedright\n', '')
   table_latex = table_latex:gsub('\\end{minipage}', '')
+
+  -- Trim leading and trailing spaces from all table cells
+  -- Match content between & or start/end of row and trim
+  table_latex = table_latex:gsub('([&\n])%s+([^&\\\n]+)%s+([&\\])', '%1%2%3')
+  table_latex = table_latex:gsub('^%s+([^&\\\n]+)%s+([&\\])', '%1%2')
+
+  -- Make header text bold and colored with background
+  -- Format headers by wrapping non-command text in textbf and color, add row background
+  table_latex = table_latex:gsub('(\\caption.-\n\\hline\n)(.-)(\\hline\n\\endfirsthead)', function(caption, header_content, end_marker)
+    -- Add row color and wrap words with formatting
+    local formatted = '\\rowcolor{tableheaderbg} ' .. header_content:gsub('([%a][%w%s]*)', function(word)
+      -- Only format actual words, not LaTeX commands
+      if not word:match('^%s*$') then
+        return '\\textbf{\\color{tableheadertext}{' .. word .. '}}'
+      end
+      return word
+    end)
+    return caption .. formatted .. end_marker
+  end)
+
+  -- Also format repeated headers (between \endfirsthead and \endhead)
+  table_latex = table_latex:gsub('(\\endfirsthead\n\\hline\n)(.-)(\\hline\n\\endhead)', function(start, header_content, end_marker)
+    local formatted = '\\rowcolor{tableheaderbg} ' .. header_content:gsub('([%a][%w%s]*)', function(word)
+      if not word:match('^%s*$') then
+        return '\\textbf{\\color{tableheadertext}{' .. word .. '}}'
+      end
+      return word
+    end)
+    return start .. formatted .. end_marker
+  end)
+
+  -- Add zebra striping by inserting \rowcolor before each data row
+  -- Find the end of table headers and start of data rows
+  local row_num = 0
+  table_latex = table_latex:gsub('(\\endlastfoot\n)(.-)(\n\\end{longtable})', function(header_end, body, table_end)
+    -- Split body into lines and process each row
+    local lines = {}
+    local in_row = false
+    local row_content = ""
+
+    for line in (body .. "\n"):gmatch("([^\n]*)\n") do
+      if line:match("\\\\%s*$") then
+        -- End of row found
+        row_content = row_content .. line
+        row_num = row_num + 1
+        local color = (row_num % 2 == 1) and 'white' or 'tablerowstripe'
+        table.insert(lines, '\\rowcolor{' .. color .. '} ' .. row_content)
+        row_content = ""
+      elseif line:match("\\hline") or line == "" then
+        -- Standalone line (hline or empty)
+        if row_content ~= "" then
+          table.insert(lines, row_content)
+          row_content = ""
+        end
+        table.insert(lines, line)
+      else
+        -- Continuation of previous line or start of new row
+        if row_content ~= "" then
+          row_content = row_content .. "\n" .. line
+        else
+          row_content = line
+        end
+      end
+    end
+
+    return header_end .. table.concat(lines, "\n") .. table_end
+  end)
 
   -- Insert the modified table as raw LaTeX
   table.insert(blocks, pandoc.RawBlock('latex', table_latex))
