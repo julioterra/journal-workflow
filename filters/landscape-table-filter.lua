@@ -318,7 +318,12 @@ function Table(el)
   end
 
   -- Estimate content density (weighted: 40% avg + 60% max cell chars)
-  local content_density = estimate_content_density(el)
+  local raw_density = estimate_content_density(el)
+
+  -- Scale density by available space: larger pages have more room per column
+  -- Use same scaling factor as threshold (1.5 power) so they balance
+  local space_scaling = (page_width_inches / 6.0) ^ 1.5
+  local content_density = raw_density / space_scaling
 
   -- Calculate optimal column widths based on per-column content density
   -- Returns both the widths (normalized to 1.0) and natural_width (sum of minimums before normalization)
@@ -337,13 +342,15 @@ function Table(el)
 
   -- Calculate density threshold scaled by both page width and column count
   -- Base threshold: 60 for 6" page
-  -- Page scaling: Smaller pages need proportionally lower thresholds
+  -- Page scaling: Use quadratic scaling to be more aggressive for larger pages
+  --   (larger pages have proportionally more space per column)
   -- Column scaling: More columns = lower threshold (content spread thinner)
   --   - Anchored at 3 columns (no adjustment)
   --   - Each column above 3: 15% reduction
   --   - 2 columns: Very high threshold (5x) - 2-column tables rarely need landscape
   --   - 1 column: Extremely high threshold (10x) - should never go landscape
-  local base_threshold = 60 * (page_width_inches / 6.0)
+  local page_scaling = (page_width_inches / 6.0) ^ 1.5
+  local base_threshold = 60 * page_scaling
   local column_scaling
   if column_count <= 1 then
     column_scaling = 10.0  -- 1-column tables should never go landscape
