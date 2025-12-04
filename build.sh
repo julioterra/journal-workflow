@@ -84,6 +84,7 @@ pandoc "$INPUT_FILE" \
   --lua-filter=filters/tag-filter.lua \
   --metadata paperwidth="$PAPER_WIDTH" \
   --metadata paperheight="$PAPER_HEIGHT" \
+  --metadata pagedimensions="$PAPER_WIDTH × $PAPER_HEIGHT" \
   --toc \
   --toc-depth=2 \
   --number-sections \

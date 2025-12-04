@@ -107,7 +107,7 @@ end
 
 -- Helper function to calculate optimal column widths based on per-column content density
 -- Returns array of width percentages (as decimals, e.g., 0.25 for 25%)
-local function calculate_column_widths(el, column_count)
+local function calculate_column_widths(el, column_count, page_width_inches)
   -- Array to store character counts per column
   local col_chars = {}
   local col_max_chars = {}
@@ -199,17 +199,19 @@ local function calculate_column_widths(el, column_count)
   end
 
   -- Calculate per-column minimum widths based on longest word and header content
-  -- Estimate: assume ~80 characters fit comfortably in full linewidth
-  -- Consider both body content and headers to avoid wrapped headers
+  -- Scale character estimate based on page width (80 chars at 6", proportionally less for smaller pages)
+  -- Account for margins/padding by using 75% of theoretical chars
+  local chars_per_linewidth = (80 * (page_width_inches / 6.0)) * 0.75
+
   local col_min_widths = {}
   for i = 1, column_count do
     -- Body-based minimum (longest word + buffer)
-    local body_min = (col_longest_word[i] + 2) / 80
+    local body_min = (col_longest_word[i] + 2) / chars_per_linewidth
 
     -- Header-based minimum: try to fit entire header on one line if short
-    -- If header is longer, ensure at least longest word + buffer fits
-    local header_total_min = col_header_chars[i] / 80
-    local header_word_min = (col_header_longest_word[i] + 3) / 80
+    -- If header is longer, ensure at least longest word + generous buffer fits
+    local header_total_min = col_header_chars[i] / chars_per_linewidth
+    local header_word_min = (col_header_longest_word[i] + 4) / chars_per_linewidth
     local header_min = math.max(header_total_min, header_word_min)
 
     -- Use the maximum of body and header requirements
@@ -217,15 +219,20 @@ local function calculate_column_widths(el, column_count)
 
     -- Use max of content-based minimum and absolute floor of 8%
     col_min_widths[i] = math.max(0.08, content_min)
-    -- Cap at 25% to prevent one long header from dominating
-    col_min_widths[i] = math.min(0.25, col_min_widths[i])
   end
 
   -- Calculate natural width (sum of minimum widths before adjustment)
   -- This represents the minimum width the table actually needs
+  -- Do NOT cap individual minimums here - we need accurate total
   local natural_width = 0
   for i = 1, column_count do
     natural_width = natural_width + col_min_widths[i]
+  end
+
+  -- Now apply caps for the normalized widths (but natural_width remains uncapped)
+  for i = 1, column_count do
+    -- Cap at 25% to prevent one long header from dominating in final layout
+    col_min_widths[i] = math.min(0.25, col_min_widths[i])
   end
 
   -- Apply per-column minimum width constraints
@@ -315,38 +322,64 @@ function Table(el)
 
   -- Calculate optimal column widths based on per-column content density
   -- Returns both the widths (normalized to 1.0) and natural_width (sum of minimums before normalization)
-  local column_widths, natural_width = calculate_column_widths(el, column_count)
+  local column_widths, natural_width = calculate_column_widths(el, column_count, page_width_inches)
 
   -- Use scriptsize (7pt) for all tables for consistency
   local font_size = "scriptsize"  -- ~7pt
 
-  -- Determine if table should be in landscape based on columns and content density
-  -- Logic scales with page size:
-  --   Density threshold scales with page width (60 at 6", 50 at 5", 70 at 7", etc.)
-  --   Max portrait columns based on page width (~1.2" per column, so 5" = 4 cols, 6" = 5 cols, 7" = 5 cols, 8.5" = 7 cols)
-  --   Tables with columns > max: Always landscape
-  --   Tables with 3 to max columns: Landscape if content density > threshold
-  --   Tables with 1-2 columns: Always portrait
+  -- Determine if table should be in landscape based on:
+  -- 1. Multi-page detection (row count)
+  -- 2. Whether content actually fits (natural_width)
+  -- 3. Content density (scaled by page width and column count)
 
-  -- Scale density threshold based on page width (baseline: 60 at 6")
-  local density_threshold = 60 * (page_width_inches / 6.0)
+  -- Multi-page detection: 10+ rows likely spans pages, better in landscape for alignment
+  local is_multipage = row_count >= 10
 
-  -- Calculate max portrait columns based on page width
-  -- Rule of thumb: ~1.2" per column minimum
-  local max_portrait_columns = math.floor(page_width_inches / 1.2)
+  -- Calculate density threshold scaled by both page width and column count
+  -- Base threshold: 60 for 6" page
+  -- Page scaling: Smaller pages need proportionally lower thresholds
+  -- Column scaling: More columns = lower threshold (content spread thinner)
+  --   - Anchored at 3 columns (no adjustment)
+  --   - Each column above 3: 15% reduction
+  --   - 2 columns: Very high threshold (5x) - 2-column tables rarely need landscape
+  --   - 1 column: Extremely high threshold (10x) - should never go landscape
+  local base_threshold = 60 * (page_width_inches / 6.0)
+  local column_scaling
+  if column_count <= 1 then
+    column_scaling = 10.0  -- 1-column tables should never go landscape
+  elseif column_count == 2 then
+    column_scaling = 5.0  -- 2-column tables can handle high density via width adjustment
+  else
+    column_scaling = 1.0 - ((column_count - 3) * 0.15)
+  end
+  local density_threshold = base_threshold * column_scaling
+
+  -- Debug output
+  io.stderr:write(string.format("Table: cols=%d, rows=%d, natural_width=%.2f, density=%.1f, threshold=%.1f\n",
+    column_count, row_count, natural_width, content_density, density_threshold))
 
   local use_landscape = false
+  local reason = ""
 
-  if column_count > max_portrait_columns then
-    -- Wide tables always landscape
+  if is_multipage then
+    -- Multi-page tables always landscape for better cross-page alignment
     use_landscape = true
-  elseif column_count >= 3 and column_count <= max_portrait_columns then
-    -- Medium width: check content density
-    use_landscape = content_density > density_threshold
+    reason = "multi-page"
+  elseif natural_width > 1.0 then
+    -- Content doesn't fit in portrait - longest words/headers need more space
+    use_landscape = true
+    reason = string.format("content doesn't fit, needs %.0f%% width", natural_width * 100)
+  elseif content_density > density_threshold then
+    -- High content density for this column count and page size
+    use_landscape = true
+    reason = "content density"
   else
-    -- 1-2 columns: always portrait
+    -- Low density and content fits
     use_landscape = false
+    reason = "low density, content fits"
   end
+
+  io.stderr:write(string.format("  -> %s (%s)\n", use_landscape and "LANDSCAPE" or "PORTRAIT", reason))
 
   -- Smart sizing: Only apply width scaling to LANDSCAPE tables on pages >= 6"
   -- Portrait tables always use full width

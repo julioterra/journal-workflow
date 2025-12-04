@@ -142,11 +142,44 @@ Table: 5.2 - Quarterly Budget Analysis by Department
 
 ## 6-Column Tables
 
-### Test 6.1: Multi-Page Table (6 cols, 30 rows) - Tests pagination
+### Test 6.0: Six Column Table - Sparse (6 cols, 5 rows, minimal content)
 
-**Expected behavior**: Landscape orientation (6+ cols always landscape), spans multiple pages
+**Expected behavior**: Currently goes to landscape (6+ cols always landscape). Testing if portrait could work on 6×9 with sparse content.
 
-Table: 6.1 - Monthly Sales Data by Region and Product Category
+Table: 6.0 - Weekly Task Status
+
+| Mon | Tue | Wed | Thu | Fri | Sat |
+|:----|:----|:----|:----|:----|:----|
+| ✓   | ✓   | ✓   | ✗   | ✓   | -   |
+| 3   | 4   | 2   | 0   | 5   | 0   |
+| OK  | OK  | OK  | Skip| OK  | Off |
+| 8am | 9am | 8am | -   | 7am | -   |
+| Done| Done| Done| N/A | Done| N/A |
+
+---
+
+### Test 6.1: Six Column Table - Dense (6 cols, 7 rows, detailed content)
+
+**Expected behavior**: Should go to landscape based on content density despite having 6 columns (at the limit for 6×9).
+
+Table: 6.1 - Project Resource Allocation Summary
+
+| Project Name | Department | Team Lead | Budget Allocated | Resources Assigned | Completion Status |
+|:-------------|:-----------|:----------|:-----------------|:-------------------|:------------------|
+| Customer Portal Redesign | Engineering | Sarah Johnson | $245,000 | 8 developers, 2 designers, 1 PM | 65% complete, on track for Q2 delivery |
+| Mobile App Enhancement | Product | Michael Chen | $180,000 | 5 developers, 3 QA engineers | 80% complete, beta testing phase |
+| Data Migration Initiative | Infrastructure | David Williams | $320,000 | 6 engineers, 2 DBAs, 1 architect | 45% complete, some delays expected |
+| Marketing Automation | Marketing | Jennifer Davis | $95,000 | 3 developers, 1 designer | 90% complete, final UAT in progress |
+| Security Audit Implementation | Security | Robert Martinez | $275,000 | 4 security engineers, 2 consultants | 55% complete, additional resources needed |
+| AI/ML Integration Project | Data Science | Emily Thompson | $410,000 | 7 data scientists, 4 ML engineers | 35% complete, research phase ongoing |
+
+---
+
+### Test 6.2: Multi-Page Table (6 cols, 30 rows) - Tests pagination
+
+**Expected behavior**: Landscape orientation (multi-page rule), spans multiple pages
+
+Table: 6.2 - Monthly Sales Data by Region and Product Category
 
 | Month | Region | Product Category | Revenue ($) | Units Sold | Growth (%) |
 |:------|:-------|:-----------------|:------------|:-----------|:-----------|
