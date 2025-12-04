@@ -2,9 +2,12 @@
 -- Applies smart styling to tables: landscape rotation, font switching, and dynamic sizing
 
 -- Helper function to estimate content density in a table
+-- Returns a weighted score combining average and max cell content
+-- Weights max content more heavily (60%) as it's a better indicator of needed space
 local function estimate_content_density(el)
   local total_chars = 0
   local cell_count = 0
+  local max_chars = 0
 
   -- Count characters in table body
   if el.bodies then
@@ -13,18 +16,56 @@ local function estimate_content_density(el)
         for _, cell in ipairs(row.cells) do
           -- Walk through cell content and count characters
           local cell_text = pandoc.utils.stringify(cell.contents)
-          total_chars = total_chars + #cell_text
+          local char_count = #cell_text
+          total_chars = total_chars + char_count
           cell_count = cell_count + 1
+
+          -- Track maximum cell content
+          if char_count > max_chars then
+            max_chars = char_count
+          end
         end
       end
     end
   end
 
-  -- Return average characters per cell
+  -- Calculate average
+  local avg_chars = 0
   if cell_count > 0 then
-    return total_chars / cell_count
+    avg_chars = total_chars / cell_count
   end
-  return 0
+
+  -- Return weighted score: 40% average + 60% max
+  -- This gives more weight to the longest cell content
+  return (0.4 * avg_chars) + (0.6 * max_chars)
+end
+
+-- Helper function to detect if a column contains numeric data
+local function is_numeric_column(el, col_index)
+  local numeric_count = 0
+  local total_count = 0
+
+  if el.bodies then
+    for _, body in ipairs(el.bodies) do
+      for _, row in ipairs(body.body) do
+        if row.cells[col_index] then
+          local cell_text = pandoc.utils.stringify(row.cells[col_index].contents)
+          -- Trim whitespace
+          cell_text = cell_text:match("^%s*(.-)%s*$")
+          total_count = total_count + 1
+
+          -- Check if cell contains primarily numeric content
+          -- Match: optional $, numbers, commas, decimals, optional %
+          if cell_text:match("^%$?[%d,%.]+%%?$") then
+            numeric_count = numeric_count + 1
+          end
+        end
+      end
+    end
+  end
+
+  -- Column is numeric if 75% or more cells are numeric
+  return total_count > 0 and (numeric_count / total_count) >= 0.75
 end
 
 function Table(el)
@@ -48,75 +89,151 @@ function Table(el)
     row_count = #el.rows
   end
 
-  -- Estimate content density (avg characters per cell)
-  local avg_chars_per_cell = estimate_content_density(el)
-  local is_dense = avg_chars_per_cell > 50  -- Consider dense if >50 chars/cell
+  -- Estimate content density (weighted: 40% avg + 60% max cell chars)
+  local content_density = estimate_content_density(el)
 
-  -- Determine font size based on table dimensions
-  -- Reduced by 1 point across the board:
-  -- Small (9pt): < 5 columns AND < 10 rows
-  -- Smaller (8pt): 5+ columns OR 10+ rows
-  -- Smallest (7pt): 5+ columns AND 10+ rows
-  local font_size = "small"  -- ~9pt (reduced from 10pt)
-  if column_count >= 5 and row_count >= 10 then
-    font_size = "scriptsize"  -- ~7pt (reduced from 8pt)
-  elseif column_count >= 5 or row_count >= 10 then
-    font_size = "footnotesize"  -- ~8pt (reduced from 9pt)
+  -- Use scriptsize (7pt) for all tables for consistency
+  local font_size = "scriptsize"  -- ~7pt
+
+  -- Determine if table should be in landscape based on columns and content density
+  -- Logic:
+  --   6+ columns: Always landscape (too wide for portrait)
+  --   3-5 columns: Landscape if content density > threshold (needs width for dense content)
+  --   1-2 columns: Always portrait (narrow enough to fit)
+  local density_threshold = 60  -- Weighted score threshold for landscape
+  local use_landscape = false
+
+  if column_count >= 6 then
+    -- Wide tables always landscape
+    use_landscape = true
+  elseif column_count >= 3 and column_count <= 5 then
+    -- Medium width: check content density
+    use_landscape = content_density > density_threshold
+  else
+    -- 1-2 columns: always portrait
+    use_landscape = false
   end
-
-  -- Determine if table should be in landscape
-  -- Landscape if: 5+ columns OR (2+ columns with dense content)
-  local use_landscape = column_count >= 5 or (column_count >= 2 and is_dense)
 
   -- Build the LaTeX wrapper
   local blocks = {}
 
-  -- For dense tables with fewer than 5 columns, add page break before
-  if column_count < 5 and is_dense then
-    table.insert(blocks, pandoc.RawBlock('latex', '\\clearpage'))
-  end
-
   -- Start table environment with font changes and spacing adjustments
   local table_setup = '{\\tablefont\\' .. font_size
-  table_setup = table_setup .. '\\renewcommand{\\arraystretch}{1.5}'  -- Add vertical row spacing
+  -- Use standard row spacing for all tables - let LaTeX handle wrapping naturally
+  table_setup = table_setup .. '\\renewcommand{\\arraystretch}{1.5}'
 
-  -- Adjust column spacing based on table width
-  if column_count >= 5 then
-    -- Very tight spacing for wide tables to prevent excessive gaps
-    -- Using minimal spacing so columns don't stretch unnecessarily
-    table_setup = table_setup .. '\\setlength{\\tabcolsep}{0.5pt}'
+  -- Adjust column spacing based on table width and orientation
+  if column_count >= 6 then
+    -- Wide tables (6+ columns): more spacing
+    table_setup = table_setup .. '\\setlength{\\tabcolsep}{10pt}'
+  elseif column_count == 5 then
+    -- 5 columns: moderate spacing
+    table_setup = table_setup .. '\\setlength{\\tabcolsep}{6pt}'
   else
-    -- More generous spacing for small tables (< 5 columns)
-    table_setup = table_setup .. '\\setlength{\\tabcolsep}{12pt}'  -- Significantly more space
+    -- Small tables (3-4 columns): spacing depends on orientation
+    if use_landscape then
+      -- Landscape small tables: less padding (page is wide)
+      table_setup = table_setup .. '\\setlength{\\tabcolsep}{8pt}'
+    else
+      -- Portrait small tables: generous spacing
+      table_setup = table_setup .. '\\setlength{\\tabcolsep}{25pt}'
+    end
   end
 
-  -- Add zebra striping (subtle alternating row colors)
-  -- Start on row 2 to skip header row
-  table_setup = table_setup .. '\\rowcolors{2}{tablerowlight}{tablerowdark}'
+  -- Set thin vertical rules for columns and borders
+  table_setup = table_setup .. '\\setlength{\\arrayrulewidth}{0.3pt}'
+
+  -- Center all tables
+  table_setup = table_setup .. '\\centering'
 
   table.insert(blocks, pandoc.RawBlock('latex', table_setup))
+
+  -- Determine if table is likely single-page (for vertical centering)
+  -- Multi-page if: 10+ rows AND (6+ cols OR dense content)
+  local is_dense = content_density > density_threshold
+  local is_likely_multipage = row_count >= 10 and (column_count >= 6 or is_dense)
 
   -- Add landscape environment for wide tables or dense tables
   if use_landscape then
     table.insert(blocks, pandoc.RawBlock('latex', '\\begin{landscape}'))
     -- Remove footers on all landscape pages (including multi-page tables)
     table.insert(blocks, pandoc.RawBlock('latex', '\\pagestyle{empty}'))
+
+    -- For single-page tables, add vertical centering
+    if not is_likely_multipage then
+      table.insert(blocks, pandoc.RawBlock('latex', '\\vspace*{\\fill}'))
+    end
+
     -- Center the table horizontally in landscape mode
     table.insert(blocks, pandoc.RawBlock('latex', '\\centering'))
-    -- For tables with 5-6 columns, constrain width to prevent over-stretching
-    -- This helps columns with short content (like scores) not get too wide
-    if column_count >= 5 and column_count <= 6 then
-      -- Use a narrower linewidth for table calculations (6 inches instead of full landscape width)
-      table.insert(blocks, pandoc.RawBlock('latex', '\\begingroup\\setlength{\\linewidth}{6in}'))
-    end
   end
 
-  -- Insert the actual table
-  table.insert(blocks, el)
+  -- Convert table to LaTeX and add vertical rules between columns
+  local table_latex = pandoc.write(pandoc.Pandoc({el}), 'latex')
 
-  -- Close width constraint if used
-  if use_landscape and column_count >= 5 and column_count <= 6 then
-    table.insert(blocks, pandoc.RawBlock('latex', '\\endgroup'))
+  -- Modify longtable column specification to add vertical rules and outer borders
+  -- Handle two patterns:
+  -- 1. Simple columns: {@{}lll@{}} -> {@{}|l|l|l|@{}} (with r for numeric columns)
+  table_latex = table_latex:gsub('(@{})([lrc]+)(@{})', function(left, cols, right)
+    local new_cols = ''
+    for i = 1, #cols do
+      local col_char = cols:sub(i,i)
+      -- Check if this column is numeric and should be right-aligned
+      if col_char == 'l' and is_numeric_column(el, i) then
+        col_char = 'r'
+      end
+      new_cols = new_cols .. '|' .. col_char
+    end
+    new_cols = new_cols .. '|'  -- Right border
+    return left .. new_cols .. right
+  end)
+
+  -- 2. Complex paragraph columns: Insert | at start, between columns, and at end
+  -- Keep p{} for top-aligned body rows (headers will be manually centered)
+  -- Add left border before first column
+  table_latex = table_latex:gsub('(@{}\n)(%s*)(>[^p]+)p({[^}]+})', '%1%2|%3p%4')
+  -- Add | before subsequent columns
+  table_latex = table_latex:gsub('(\n%s*)(>[^p]+)p({[^}]+})', '%1|%2p%3')
+  -- Add right border: find }@{}} pattern and insert | before the first }
+  table_latex = table_latex:gsub('}(@{}})', '}|%1')
+
+  -- Right-align numeric columns in paragraph tables
+  -- Extract column specifications and check each one
+  local col_index = 1
+  table_latex = table_latex:gsub('(>[^}]+\\arraybackslash})(p{[^}]+})', function(prefix, width)
+    local alignment = prefix
+    if is_numeric_column(el, col_index) then
+      -- Change raggedright to raggedleft for numeric columns
+      alignment = alignment:gsub('\\raggedright', '\\raggedleft')
+    end
+    col_index = col_index + 1
+    return alignment .. width
+  end)
+
+  -- Replace booktabs rules with standard \hline for continuous borders
+  table_latex = table_latex:gsub('\\toprule\\noalign{}', '\\hline')
+  table_latex = table_latex:gsub('\\midrule\\noalign{}', '\\hline')
+  table_latex = table_latex:gsub('\\bottomrule\\noalign{}', '\\hline')
+
+  -- Adjust column widths for 5-column tables to give last column more space
+  if column_count == 5 then
+    -- Redistribute widths: make last column wider, narrow score columns
+    table_latex = table_latex:gsub('0%.1333%}', '0.12}')  -- Name: 13.33% -> 12%
+    table_latex = table_latex:gsub('0%.2667%}', '0.22}')  -- Department: 26.67% -> 22%
+    table_latex = table_latex:gsub('0%.2222%}', '0.12}')  -- Q1/Q2 Scores: 22.22% -> 12% each
+    table_latex = table_latex:gsub('0%.1556%}', '0.40}')  -- Notes: 15.56% -> 40%
+  end
+
+  -- Fix header row minipages (remove them as they interfere with alignment)
+  table_latex = table_latex:gsub('\\begin{minipage}%[b%]{\\linewidth}\\raggedright\n', '')
+  table_latex = table_latex:gsub('\\end{minipage}', '')
+
+  -- Insert the modified table as raw LaTeX
+  table.insert(blocks, pandoc.RawBlock('latex', table_latex))
+
+  -- For single-page tables in landscape, add vertical centering after
+  if use_landscape and not is_likely_multipage then
+    table.insert(blocks, pandoc.RawBlock('latex', '\\vspace*{\\fill}'))
   end
 
   -- Close landscape environment
@@ -128,11 +245,6 @@ function Table(el)
 
   -- Close font environment
   table.insert(blocks, pandoc.RawBlock('latex', '}'))
-
-  -- For dense tables with fewer than 5 columns, add page break after
-  if column_count < 5 and is_dense then
-    table.insert(blocks, pandoc.RawBlock('latex', '\\clearpage'))
-  end
 
   return blocks
 end

@@ -193,9 +193,11 @@
 % Define 'none' counter for uncaptioned tables (Pandoc compatibility)
 \newcounter{none}
 
-% Define colors for zebra striping (very subtle)
-\definecolor{tablerowlight}{RGB}{255,255,255}  % White
-\definecolor{tablerowdark}{RGB}{248,248,248}   % Very light gray
+% Define color for table rules (borders and column separators)
+\definecolor{tablerule}{RGB}{0,0,0}      % Black for rules
+
+% Set default color for table rules
+\arrayrulecolor{tablerule}
 
 % Graphics with smart sizing
 \usepackage{graphicx}
