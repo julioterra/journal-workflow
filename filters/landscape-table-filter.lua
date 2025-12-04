@@ -120,25 +120,10 @@ function Table(el)
   -- Start table environment with font changes and spacing adjustments
   local table_setup = '{\\tablefont\\' .. font_size
   -- Use standard row spacing for all tables - let LaTeX handle wrapping naturally
-  table_setup = table_setup .. '\\renewcommand{\\arraystretch}{1.5}'
+  table_setup = table_setup .. '\\renewcommand{\\arraystretch}{1.8}'
 
-  -- Adjust column spacing based on table width and orientation
-  if column_count >= 6 then
-    -- Wide tables (6+ columns): more spacing
-    table_setup = table_setup .. '\\setlength{\\tabcolsep}{10pt}'
-  elseif column_count == 5 then
-    -- 5 columns: moderate spacing
-    table_setup = table_setup .. '\\setlength{\\tabcolsep}{6pt}'
-  else
-    -- Small tables (3-4 columns): spacing depends on orientation
-    if use_landscape then
-      -- Landscape small tables: less padding (page is wide)
-      table_setup = table_setup .. '\\setlength{\\tabcolsep}{8pt}'
-    else
-      -- Portrait small tables: generous spacing
-      table_setup = table_setup .. '\\setlength{\\tabcolsep}{25pt}'
-    end
-  end
+  -- Use uniform column spacing for all tables (8pt)
+  table_setup = table_setup .. '\\setlength{\\tabcolsep}{8pt}'
 
   -- Set thin vertical rules for columns and borders
   table_setup = table_setup .. '\\setlength{\\arrayrulewidth}{0.3pt}'

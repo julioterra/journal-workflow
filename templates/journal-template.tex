@@ -186,12 +186,22 @@
 \usepackage{longtable,booktabs,array}
 \usepackage{calc}
 \usepackage{tabularx}
+\usepackage{caption}  % For caption formatting
 \usepackage{pdflscape}  % For landscape table rotation
 \usepackage[table]{xcolor}  % For zebra striping
 \setlength{\LTpre}{0pt}
 \setlength{\LTpost}{0pt}
 % Define 'none' counter for uncaptioned tables (Pandoc compatibility)
 \newcounter{none}
+
+% Configure table caption styling
+% Use main serif font, footnotesize (8pt, one size larger than table content), and bold
+\DeclareCaptionFont{tablecaptionfont}{\footnotesize\bfseries}
+\captionsetup[table]{
+  font=tablecaptionfont,
+  labelfont=tablecaptionfont,
+  textfont=tablecaptionfont
+}
 
 % Define color for table rules (borders and column separators)
 \definecolor{tablerule}{RGB}{0,0,0}      % Black for rules
