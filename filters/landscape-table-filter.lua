@@ -297,6 +297,9 @@ function Table(el)
   -- Build the LaTeX wrapper
   local blocks = {}
 
+  -- Add space before table to separate from preceding text
+  table.insert(blocks, pandoc.RawBlock('latex', '\\vspace{1.5\\baselineskip}'))
+
   -- Start table environment with font changes and spacing adjustments
   local table_setup = '{\\tablefont\\' .. font_size
   -- Use standard row spacing for all tables - let LaTeX handle wrapping naturally
@@ -405,25 +408,34 @@ function Table(el)
 
   -- Make header text bold and colored with background
   -- Format headers by wrapping non-command text in textbf and color, add row background
+  -- Trim spaces within the header formatting to prevent alignment issues
   table_latex = table_latex:gsub('(\\caption.-\n\\hline\n)(.-)(\\hline\n\\endfirsthead)', function(caption, header_content, end_marker)
+    -- First normalize spaces in header: collapse newlines and multiple spaces to single space
+    header_content = header_content:gsub('%s+', ' ')
     -- Add row color and wrap words with formatting
     local formatted = '\\rowcolor{tableheaderbg} ' .. header_content:gsub('([%a][%w%s]*)', function(word)
+      -- Trim the word before wrapping
+      word = word:match('^%s*(.-)%s*$')
       -- Only format actual words, not LaTeX commands
-      if not word:match('^%s*$') then
+      if word and word ~= '' and not word:match('^%s*$') then
         return '\\textbf{\\color{tableheadertext}{' .. word .. '}}'
       end
-      return word
+      return ''
     end)
     return caption .. formatted .. end_marker
   end)
 
   -- Also format repeated headers (between \endfirsthead and \endhead)
   table_latex = table_latex:gsub('(\\endfirsthead\n\\hline\n)(.-)(\\hline\n\\endhead)', function(start, header_content, end_marker)
+    -- First normalize spaces in header: collapse newlines and multiple spaces to single space
+    header_content = header_content:gsub('%s+', ' ')
     local formatted = '\\rowcolor{tableheaderbg} ' .. header_content:gsub('([%a][%w%s]*)', function(word)
-      if not word:match('^%s*$') then
+      -- Trim the word before wrapping
+      word = word:match('^%s*(.-)%s*$')
+      if word and word ~= '' and not word:match('^%s*$') then
         return '\\textbf{\\color{tableheadertext}{' .. word .. '}}'
       end
-      return word
+      return ''
     end)
     return start .. formatted .. end_marker
   end)
@@ -483,5 +495,13 @@ function Table(el)
   -- Close font environment
   table.insert(blocks, pandoc.RawBlock('latex', '}'))
 
+  -- Add space after table to separate from following text
+  table.insert(blocks, pandoc.RawBlock('latex', '\\vspace{1.5\\baselineskip}'))
+
   return blocks
+end
+
+-- Remove horizontal rules (---) from output
+function HorizontalRule(el)
+  return {}
 end
