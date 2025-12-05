@@ -96,7 +96,8 @@ FIRST_DATE=$(grep -m 1 "^# [A-Z]" "$INPUT_FILE" | sed 's/^# //')
 LAST_DATE=$(grep "^# [A-Z]" "$INPUT_FILE" | tail -1 | sed 's/^# //')
 
 # Remove old frontmatter (from first --- to second ---, inclusive)
-sed -i '' '1{/^---$/!b};:a;/^---$/!{N;ba;};d' "$INPUT_FILE"
+# Use awk instead of complex sed for better compatibility
+awk 'BEGIN{p=1} /^---$/{if(p){p=0;next}else{p=1;next}} p' "$INPUT_FILE" > "${INPUT_FILE}.tmp" && mv "${INPUT_FILE}.tmp" "$INPUT_FILE"
 
 # Create new frontmatter
 cat > temp_frontmatter.md << EOF
