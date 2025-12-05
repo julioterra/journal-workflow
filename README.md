@@ -18,14 +18,14 @@ journal-workflow/
 ## 🎯 Current Features
 
 ### ✅ Implemented
-- **Custom LaTeX template** with beautiful typography (Verdigris MVB Pro Text font)
-- **Print-ready dimensions** (6" × 9" book format)
-- **Six separate indexes**: Books, Definitions, Organizations, People, Projects, and Tags
-- **Tag highlighting**: All `#tags` are highlighted with background colors and indexed
-- **Object embed removal**: Standalone embedded page references are filtered out
-- **Media link filtering**: Clean handling of images and videos
-- **Clean builds**: Output directory cleared by default (prevents stale file bugs)
 - **Capacities export processing**: Automated workflow for processing Capacities exports
+- **Custom LaTeX template** with beautiful typography (Verdigris MVB Pro Text font)
+- **Customizable book dimensions** defaults to 6" × 9" book format
+- **Indexed links to objects**: Books, Definitions, Organizations, People, and Projects
+- **Tag handling**: All `#tags` are highlighted with background colors and indexed
+- **Media link filtering**: Clean handling of images and pdfs, and removal of videos
+- **Object embed removal**: Standalone embedded page references are filtered out
+- **Clean builds**: Output directory cleared by default (prevents stale file bugs)
 - **Character encoding fixes**: Handles UTF-8 encoding issues
 - **Clean typography**: Professional margins, headers, and footers
 - **Color emoji support**: Full color emoji rendering with LuaLaTeX and font fallback
@@ -35,7 +35,7 @@ journal-workflow/
 
 ### 🚧 Coming Soon
 - Enhanced formatting for tags with more color options
-- Output configuration via build.sh flags
+- Ability to configure objects that are indexed
 
 ## 🚀 Quick Start
 
@@ -66,10 +66,12 @@ If the test works, you're ready to build your own journal!
 
 ### Step 1
 Export your content from Capacities and place the downloaded `.zip` file in the `source/` directory of the project. Follow these steps to download your daily notes from Capacities:
-1. Go to the `Daily Notes` page in Capacities 
+1. Go to the `Daily Notes` objects page in Capacities 
 2. Use the filter to set a date range
 3. Choose `export` from the `...` menu on the top right corner of the window
 4. Select the `Export folder containing all subpages` checkbox from the pop-up modal
+
+**Important Note:** even if you want to test this set-up on a single journal page you need to download it Daily Notes objects page in Capacities. 
 
 ### Step 2
 ```bash
@@ -93,7 +95,7 @@ Export your content from Capacities and place the downloaded `.zip` file in the 
 Your PDF will have:
 - **Daily Notes** organized by date
 - **Images & PDFs** rendered in large format
-- **Tags** like #PersonalJournal in **blue** 
+- **Tags** like #PersonalJournal in **yellow** 
 - **Six Indexes** in the back for the following object types: Organizations, Projects, People, Books, Definitions, and Tags
 
 ## 📚 Understanding the Filters
@@ -116,20 +118,12 @@ The workflow uses five Lua filters to process your markdown:
 - Prevents embedded page content from appearing in final PDF
 
 ### 4. landscape-table-filter.lua
-- **Analyzes table dimensions and content density**
-- **Automatically chooses portrait or landscape orientation**
-- **Uses sans-serif font (Helvetica Neue) for better readability**
-- **Applies zebra striping and professional styling**
-- **Defers landscape tables to dedicated pages while allowing content to flow**
-
-**How it works:**
-- Calculates natural width needed for table columns
-- Analyzes content density (characters per cell)
-- Compares against orientation thresholds
-- Low density + fits portrait → Portrait orientation
-- High density or doesn't fit → Landscape orientation
-- Multi-page tables (15+ rows) → Always landscape
-
+- Analyzes table dimensions and content density
+- Automatically chooses portrait or landscape orientation
+- Uses sans-serif font (Helvetica Neue) for better readability
+- Applies zebra striping and professional styling
+- Defers landscape tables to dedicated pages while allowing content to flow.  
+  
 ### 5. add-index-entries.lua
 - Routes references to appropriate index categories
 - Handles: People, Organizations, Projects, Definitions, Books
@@ -144,7 +138,7 @@ The workflow uses five Lua filters to process your markdown:
 
 ## 📇 Understanding the Indexing System
 
-The workflow generates **six separate indexes** using LaTeX's `imakeidx` package:
+The workflow generates **separate indexes** using LaTeX's `imakeidx` package:
 
 ### How It Works
 
@@ -244,6 +238,7 @@ Preprocesses Capacities markdown for LaTeX.
 - `$1` - Title for the document (default: "Journal")
 - `$2` - Author name (default: "Julio Terra")
 - `$3` - Input file path (default: "source/journal.md")
+- `$4` - Volume (default: "")
 - `--toggle-deindent` - Optional flag to remove 4-space indentation from Capacities toggle groups
 
 **What it does:**
@@ -326,35 +321,58 @@ luaotfload-tool --find="Font Name"
 Edit `templates/journal-template.tex` (around line 65):
 
 ```latex
-\definecolor{tagcolor}{RGB}{100,149,237}      % Tags (cornflower blue)
-\definecolor{linkcolor}{RGB}{70,70,120}       % Links (steel blue)
-\definecolor{headingcolor}{RGB}{0,0,0}        % Headings (black)
+\definecolor{tag-bg-default}{RGB}{255,245,157}    % Tags default (ight yellow)
+\definecolor{linkcolor}{RGB}{70,70,120}           % Links (steel blue)
+\definecolor{headingcolor}{RGB}{0,0,0}            % Headings (black)
 ```
 
 RGB values range from 0-255 for each color component.
 
-### Changing Page Size
+### Changing Page Size and Margins
 
-Edit the geometry settings in the template (around line 22):
+Configure page dimensions and margins using command-line arguments with build.sh:
 
-```latex
-% Current: 6" × 9" (standard trade paperback)
-\usepackage[
-  paperwidth=6in,
-  paperheight=9in,
-  top=0.75in,
-  bottom=0.75in,
-  inner=0.875in,
-  outer=0.625in,
-  bindingoffset=0.25in
-]{geometry}
+```bash
+# Basic page size change
+./build.sh source/journal.md --paperwidth 5in --paperheight 8in
 
-% For 5" × 8" (digest size):
-paperwidth=5in, paperheight=8in
-
-% For A5 (European standard):
-paperwidth=148mm, paperheight=210mm
+# Full geometry customization
+./build.sh source/journal.md \
+  --paperwidth 5in \
+  --paperheight 8in \
+  --top 1in \
+  --bottom 1in \
+  --inner 1in \
+  --outer 0.5in \
+  --bindingoffset 0.25in
 ```
+
+**Available geometry options:**
+- `--paperwidth <size>` - Paper width (default: 6in)
+- `--paperheight <size>` - Paper height (default: 9in)
+- `--top <size>` - Top margin (default: 0.75in)
+- `--bottom <size>` - Bottom margin (default: 0.75in)
+- `--inner <size>` - Inner margin (default: 0.875in)
+- `--outer <size>` - Outer margin (default: 0.625in)
+- `--bindingoffset <size>` - Binding offset (default: 0.25in)
+
+**Standard book sizes:**
+
+```bash
+# 5" × 8" (digest size)
+./build.sh source/journal.md --paperwidth 5in --paperheight 8in
+
+# 7" × 10" (royal)
+./build.sh source/journal.md --paperwidth 7in --paperheight 10in
+
+# A5 (European standard)
+./build.sh source/journal.md --paperwidth 148mm --paperheight 210mm
+
+# 8.5" × 11" (US Letter)
+./build.sh source/journal.md --paperwidth 8.5in --paperheight 11in
+```
+
+**Note:** If you need to permanently change the defaults, you can edit the default values in `build.sh` (lines 11-17) or the template fallback values in `templates/journal-template.tex` (lines 45-49).
 
 ## 😀 Emoji and Checkbox Support
 
@@ -448,20 +466,6 @@ local CHECKED_BOX = '\\item[{\\raisebox{0.15ex}{\\scalebox{0.7}{\\wingdingsii\\s
 **4. Adjust sizing** - Change the `\scalebox{0.7}` value (0.7 = 70% of original size)
 
 **5. Adjust vertical alignment** - Change the `\raisebox{0.15ex}` value (higher = raised more)
-
-### Testing Emoji Support
-
-A comprehensive test file is provided:
-```bash
-./build.sh source/emoji-test.md
-open output/emoji-test.pdf
-```
-
-This test file includes:
-- Common emojis (smileys, gestures, hearts, nature)
-- Technical emojis (💻 🖥️ ⚙️)
-- Task list checkboxes
-- Mixed content examples
 
 ### Nested List Indentation
 

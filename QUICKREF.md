@@ -141,27 +141,50 @@ Quick summary:
 3. Update filters to route entries
 4. Add `\printindexsection{NewType}{newtype}` in template
 
-## 📏 Page Size Presets
+## 📏 Page Size and Margins
 
-Edit `templates/journal-template.tex`, geometry section (line ~22):
+Configure page dimensions and margins using command-line arguments:
 
 ### Standard Sizes
-```latex
-% Current: 6" × 9" (Trade Paperback)
-paperwidth=6in, paperheight=9in
+```bash
+# 6" × 9" (Trade Paperback) - default
+./build.sh source/journal.md
 
-% Digest: 5" × 8"
-paperwidth=5in, paperheight=8in
+# 5" × 8" (Digest)
+./build.sh source/journal.md --paperwidth 5in --paperheight 8in
 
-% Crown Quarto: 7.44" × 9.68"
-paperwidth=7.44in, paperheight=9.68in
+# 7" × 10" (Royal)
+./build.sh source/journal.md --paperwidth 7in --paperheight 10in
 
-% A5: 5.83" × 8.27"
-paperwidth=5.83in, paperheight=8.27in
+# A5 (European)
+./build.sh source/journal.md --paperwidth 148mm --paperheight 210mm
 
-% US Letter: 8.5" × 11"
-paperwidth=8.5in, paperheight=11in
+# 8.5" × 11" (US Letter)
+./build.sh source/journal.md --paperwidth 8.5in --paperheight 11in
 ```
+
+### Custom Margins
+```bash
+# Customize all margins
+./build.sh source/journal.md \
+  --top 1in \
+  --bottom 1in \
+  --inner 1.25in \
+  --outer 0.75in \
+  --bindingoffset 0.5in
+
+# Just adjust binding offset
+./build.sh source/journal.md --bindingoffset 0.5in
+```
+
+### Available Options
+- `--paperwidth <size>` (default: 6in)
+- `--paperheight <size>` (default: 9in)
+- `--top <size>` (default: 0.75in)
+- `--bottom <size>` (default: 0.75in)
+- `--inner <size>` (default: 0.875in)
+- `--outer <size>` (default: 0.625in)
+- `--bindingoffset <size>` (default: 0.25in)
 
 ## 🔍 Debugging
 
