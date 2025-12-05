@@ -4,22 +4,22 @@
 # Converts Capacities toggle structure and handles PDF images
 
 # Parse arguments
-SKIP_DEINDENT=false
+SKIP_DEINDENT=true
 TITLE="${1:-Journal}"
 AUTHOR="${2:-Julio Terra}"
 INPUT_FILE="${3:-source/journal.md}"
 VOLUME="${4:-Volume 1}"
 
-# Check for --skip-deindent flag
+# Check for --toggle-deindent flag
 for arg in "$@"; do
-    if [ "$arg" = "--skip-deindent" ]; then
-        SKIP_DEINDENT=true
+    if [ "$arg" = "--toggle-deindent" ]; then
+        SKIP_DEINDENT=false
     fi
 done
 
 if [ $# -eq 0 ]; then
-    echo "Usage: ./preprocess-capacities.sh [title] [author] [input-file] [volume] [--skip-deindent]"
-    echo "  --skip-deindent: Skip removing 4-space indentation from toggle groups"
+    echo "Usage: ./preprocess-capacities.sh [title] [author] [input-file] [volume] [--toggle-deindent]"
+    echo "  --toggle-deindent: Remove 4-space indentation from Capacities toggle groups"
     exit 1
 fi
 
@@ -41,12 +41,12 @@ sed -i '' 's/^- \(#[a-zA-Z]\)/\1/g' "$INPUT_FILE"
 # Removing 4 spaces from every line preserves RELATIVE indentation:
 #   - 4 spaces (top-level in toggle) → 0 spaces (top-level in markdown)
 #   - 8 spaces (nested in toggle)    → 4 spaces (nested in markdown)
-# Use --skip-deindent flag if your export doesn't have toggle-based indentation.
+# Use --toggle-deindent flag if your export has toggle-based indentation.
 if [ "$SKIP_DEINDENT" = false ]; then
     echo "🔧 Removing toggle indentation (4 spaces from each line)..."
     sed -i '' 's/^    //' "$INPUT_FILE"
 else
-    echo "⏭️  Skipping toggle deindentation (--skip-deindent flag set)"
+    echo "⏭️  Skipping toggle deindentation (default behavior)"
 fi
 
 # Step 1b: Remove blank lines between list items
