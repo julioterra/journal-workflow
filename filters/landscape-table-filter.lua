@@ -380,6 +380,11 @@ function Table(el)
     -- High content density for this column count and page size
     use_landscape = true
     reason = "content density"
+  elseif page_width_inches < 6.0 and column_count >= 5 then
+    -- On narrow pages (< 6"), force landscape for 5+ column tables
+    -- Even with natural-width columns, they become too cramped
+    use_landscape = true
+    reason = string.format("narrow page (%.1f\"), %d columns too wide", page_width_inches, column_count)
   else
     -- Low density and content fits
     use_landscape = false
