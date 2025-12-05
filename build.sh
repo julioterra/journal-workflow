@@ -10,6 +10,11 @@ KEEP_OUTPUT=false
 INPUT_FILE=""
 PAPER_WIDTH="6in"
 PAPER_HEIGHT="9in"
+MARGIN_TOP="0.75in"
+MARGIN_BOTTOM="0.75in"
+MARGIN_INNER="0.875in"
+MARGIN_OUTER="0.625in"
+BINDING_OFFSET="0.25in"
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -23,6 +28,26 @@ while [[ $# -gt 0 ]]; do
             ;;
         --paperheight)
             PAPER_HEIGHT="$2"
+            shift 2
+            ;;
+        --top)
+            MARGIN_TOP="$2"
+            shift 2
+            ;;
+        --bottom)
+            MARGIN_BOTTOM="$2"
+            shift 2
+            ;;
+        --inner)
+            MARGIN_INNER="$2"
+            shift 2
+            ;;
+        --outer)
+            MARGIN_OUTER="$2"
+            shift 2
+            ;;
+        --bindingoffset)
+            BINDING_OFFSET="$2"
             shift 2
             ;;
         *)
@@ -43,10 +68,20 @@ INDEX_LOG_FILE="$LOG_DIR/build.sh-index.log"
 
 
 if [ -z "$INPUT_FILE" ]; then
-    echo "Usage: ./build.sh <input.md> [--keep-output] [--paperwidth <width>] [--paperheight <height>]"
-    echo "  --keep-output: Preserve existing files in output directory"
-    echo "  --paperwidth: Paper width (default: 6in)"
-    echo "  --paperheight: Paper height (default: 9in)"
+    echo "Usage: ./build.sh <input.md> [OPTIONS]"
+    echo ""
+    echo "Options:"
+    echo "  --keep-output        Preserve existing files in output directory"
+    echo "  --paperwidth <size>  Paper width (default: 6in)"
+    echo "  --paperheight <size> Paper height (default: 9in)"
+    echo "  --top <size>         Top margin (default: 0.75in)"
+    echo "  --bottom <size>      Bottom margin (default: 0.75in)"
+    echo "  --inner <size>       Inner margin (default: 0.875in)"
+    echo "  --outer <size>       Outer margin (default: 0.625in)"
+    echo "  --bindingoffset <size> Binding offset (default: 0.25in)"
+    echo ""
+    echo "Example:"
+    echo "  ./build.sh source/journal.md --paperwidth 5in --paperheight 8in"
     exit 1
 fi
 
@@ -94,6 +129,11 @@ pandoc "$INPUT_FILE" \
   -V paperheight="$PAPER_HEIGHT" \
   -V geometry:paperwidth="$PAPER_WIDTH" \
   -V geometry:paperheight="$PAPER_HEIGHT" \
+  -V geometry:top="$MARGIN_TOP" \
+  -V geometry:bottom="$MARGIN_BOTTOM" \
+  -V geometry:inner="$MARGIN_INNER" \
+  -V geometry:outer="$MARGIN_OUTER" \
+  -V geometry:bindingoffset="$BINDING_OFFSET" \
   --standalone \
   -o "$OUTPUT_DIR/$OUTPUT_NAME.tex"
 

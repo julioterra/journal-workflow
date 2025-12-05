@@ -42,11 +42,11 @@
 \usepackage[
   paperwidth=$paperwidth$,
   paperheight=$paperheight$,
-  top=0.75in,
-  bottom=0.75in,
-  inner=0.875in,
-  outer=0.625in,
-  bindingoffset=0.25in
+  top=$if(geometry.top)$$geometry.top$$else$0.75in$endif$,
+  bottom=$if(geometry.bottom)$$geometry.bottom$$else$0.75in$endif$,
+  inner=$if(geometry.inner)$$geometry.inner$$else$0.875in$endif$,
+  outer=$if(geometry.outer)$$geometry.outer$$else$0.625in$endif$,
+  bindingoffset=$if(geometry.bindingoffset)$$geometry.bindingoffset$$else$0.25in$endif$
 ]{geometry}
 % Prevent vertical stretching to fill pages
 \raggedbottom
