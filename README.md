@@ -21,7 +21,7 @@ journal-workflow/
 - **Custom LaTeX template** with beautiful typography (Verdigris MVB Pro Text font)
 - **Print-ready dimensions** (6" × 9" book format)
 - **Six separate indexes**: Books, Definitions, Organizations, People, Projects, and Tags
-- **Tag highlighting**: All `#tags` are colored blue and indexed
+- **Tag highlighting**: All `#tags` are highlighted with background colors and indexed
 - **Object embed removal**: Standalone embedded page references are filtered out
 - **Media link filtering**: Clean handling of images and videos
 - **Clean builds**: Output directory cleared by default (prevents stale file bugs)
@@ -30,10 +30,11 @@ journal-workflow/
 - **Clean typography**: Professional margins, headers, and footers
 - **Color emoji support**: Full color emoji rendering with LuaLaTeX and font fallback
 - **Task list checkboxes**: Markdown checkboxes render as Wingdings 2 characters
+- **Adaptive table orientation**: Automatic landscape/portrait orientation based on content density
+- **Smart table formatting**: Sans-serif font, zebra striping, adaptive sizing
 
 ### 🚧 Coming Soon
-- Ability to handle complex tables
-- Enhanced formatting for tags
+- Enhanced formatting for tags with more color options
 - Output configuration via build.sh flags
 
 ## 🚀 Quick Start
@@ -43,15 +44,20 @@ journal-workflow/
 Here is how to verify that everything is working using the included test.zip file:
 
 ```bash
-./process-capacities-export.sh source/test.zip 
+./process-capacities-export.sh source/test.zip
 ./preprocess-capacities.sh "journal title" "author name" source/journal.md
 ./build.sh source/journal.md
 ```
 ### Output
 
 This will generate a test PDF that should show:
-- Tags in **blue** color (#testing, #workflow, etc.)
+- Tags **highlighted** with background colors (#testing, #workflow, etc.)
 - Object references indexed in all 6 indexes
+- Color emojis and task list checkboxes
+- Images and PDF embeds
+- **14 comprehensive table tests** (2-8 columns) with adaptive orientation
+  - Portrait orientation for low-density tables
+  - Landscape orientation for wide or high-density tables
 - Professional book layout
 
 If the test works, you're ready to build your own journal!
@@ -92,27 +98,47 @@ Your PDF will have:
 
 ## 📚 Understanding the Filters
 
-The workflow uses four Lua filters to process your markdown:
+The workflow uses five Lua filters to process your markdown:
 
-### 1. filter-media-links.lua
+### 1. task-list-filter.lua
+- Preserves task list structure during conversion
+- Converts markdown checkboxes to LaTeX checkbox commands
+- Maintains proper nesting for multi-level lists
+
+### 2. filter-media-links.lua
 - Removes Capacities metadata links after images
 - Filters out video embeds (mp4, mov, avi, etc.)
 - Converts inline video links to plain text
 
-### 2. remove-object-embeds.lua
+### 3. remove-object-embeds.lua
 - Removes standalone embedded object links (Pages/*.md)
 - Converts inline page links to plain text (links won't work in hardcover books)
 - Prevents embedded page content from appearing in final PDF
 
-### 3. add-index-entries.lua
+### 4. landscape-table-filter.lua
+- **Analyzes table dimensions and content density**
+- **Automatically chooses portrait or landscape orientation**
+- **Uses sans-serif font (Helvetica Neue) for better readability**
+- **Applies zebra striping and professional styling**
+- **Defers landscape tables to dedicated pages while allowing content to flow**
+
+**How it works:**
+- Calculates natural width needed for table columns
+- Analyzes content density (characters per cell)
+- Compares against orientation thresholds
+- Low density + fits portrait → Portrait orientation
+- High density or doesn't fit → Landscape orientation
+- Multi-page tables (15+ rows) → Always landscape
+
+### 5. add-index-entries.lua
 - Routes references to appropriate index categories
 - Handles: People, Organizations, Projects, Definitions, Books
 - Reads metadata from linked .md files
 
-### 4. tag-filter.lua
+### 6. tag-filter.lua
 - Finds hashtags like `#PersonalJournal`
 - Converts to LaTeX `\tag{}` commands
-- Colors tags blue
+- Applies background color highlighting (customizable per tag)
 - Adds to Tags index
 - Handles multiple consecutive tags: `#tag1#tag2#tag3`
 
@@ -211,19 +237,24 @@ Preprocesses Capacities markdown for LaTeX.
 
 ```bash
 ./preprocess-capacities.sh "Title" "Author" source/journal.md
+./preprocess-capacities.sh "Title" "Author" source/journal.md --toggle-deindent
 ```
 
 **Parameters:**
 - `$1` - Title for the document (default: "Journal")
 - `$2` - Author name (default: "Julio Terra")
 - `$3` - Input file path (default: "source/journal.md")
+- `--toggle-deindent` - Optional flag to remove 4-space indentation from Capacities toggle groups
 
 **What it does:**
-- Converts Capacities toggle structure
+- Converts Capacities export structure
+- Removes 4-space indentation if --toggle-deindent flag is used (for personal journals with toggles)
+- Skips deindentation by default (for test files and properly structured content)
 - Removes #PersonalJournal tags
 - Converts top-level tags to headings (#ToDos → ## To Dos)
 - Removes mentions from headings (prevents index duplicates)
 - Uncomments image links
+- Converts embedded PDFs to JPG images
 
 ### preprocess.sh
 Fixes character encoding issues.
@@ -435,6 +466,84 @@ This test file includes:
 ### Nested List Indentation
 
 Nested lists (second, third, fourth level) have 2em additional indentation per level for better visual hierarchy.
+
+## 📊 Table Support
+
+The workflow includes **adaptive table formatting** with automatic orientation detection!
+
+### How It Works
+
+The landscape-table-filter.lua analyzes each table and automatically chooses the best orientation:
+
+**Portrait Orientation** - Used when:
+- Table is narrow (few columns)
+- Content is sparse (low character density)
+- Table fits comfortably in portrait width
+
+**Landscape Orientation** - Used when:
+- Table is wide (many columns)
+- Content is dense (high character density)
+- Table would need more than 100% of portrait width
+- Table has 15+ rows (multi-page table)
+
+### Table Styling
+
+All tables automatically receive:
+- **Sans-serif font** (Helvetica Neue) - More readable for tabular data
+- **Zebra striping** - Light gray alternating rows
+- **Professional formatting** - Proper spacing, borders, and headers
+- **Adaptive column widths** - Automatically calculated based on content
+- **Caption styling** - Bold, slightly larger than table content
+
+### Writing Tables in Markdown
+
+Use standard Pandoc table syntax with captions:
+
+```markdown
+Table: Contact Information
+
+| Name | Email | Phone |
+|:-----|:------|:------|
+| John Doe | john@example.com | 555-1234 |
+| Jane Smith | jane@example.com | 555-5678 |
+```
+
+### Table Orientation Examples
+
+**Portrait** (2-column, sparse content):
+```markdown
+Table: Simple Contact List
+
+| Name | Email |
+|:-----|:------|
+| Alice | alice@example.com |
+| Bob | bob@example.com |
+```
+
+**Landscape** (7-column, dense content):
+```markdown
+Table: Comprehensive Project Tracking
+
+| Project | Owner | Status | Start | End | Budget | Notes |
+|:--------|:------|:-------|:------|:----|:-------|:------|
+| Website Redesign | Alice | Active | 2024-01-15 | 2024-06-30 | $50,000 | On track |
+| Mobile App | Bob | Planning | 2024-03-01 | 2024-12-31 | $120,000 | Needs approval |
+```
+
+### Testing Table Orientation
+
+The included test.zip contains 14 comprehensive table tests (2-8 columns) that demonstrate:
+- Sparse vs. dense content handling
+- Equal vs. unbalanced column widths
+- Portrait vs. landscape orientation selection
+- Multi-page table handling
+
+Build the test file to see how different table structures are rendered:
+```bash
+./process-capacities-export.sh source/test.zip
+./preprocess-capacities.sh "Test" "Test User" source/journal.md
+./build.sh source/journal.md
+```
 
 ## 🐛 Troubleshooting
 

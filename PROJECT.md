@@ -31,6 +31,7 @@ journal-workflow/
 │   │   ├── task-list-filter.lua
 │   │   ├── filter-media-links.lua
 │   │   ├── remove-object-embeds.lua
+│   │   ├── landscape-table-filter.lua
 │   │   ├── add-index-entries.lua
 │   │   └── tag-filter.lua
 │   ├── assets/            # Images, PDFs, fonts
@@ -59,43 +60,65 @@ journal-workflow/
   - Configures nested list indentation
 - **Customizable**: Yes! Change colors, fonts, layout, add new indexes
 
-### 🎬 Filter Pipeline (4 Lua Filters)
+### 🎬 Filter Pipeline (6 Lua Filters)
 
-#### 1. filter-media-links.lua
+#### 1. task-list-filter.lua
+- **Purpose**: Preserve task list structure and convert checkboxes
+- **What it does**:
+  - Preserves markdown task list structure
+  - Converts `[ ]` and `[x]` to LaTeX checkbox commands
+  - Maintains proper nesting for multi-level lists
+- **Processing order**: First
+
+#### 2. filter-media-links.lua
 - **Purpose**: Clean up media links from Capacities
 - **What it does**:
   - Removes Capacities metadata links after images
   - Filters out video embeds (they don't work in PDFs)
   - Converts video links to plain text
-- **Processing order**: First
+- **Processing order**: Second
 
-#### 2. remove-object-embeds.lua
+#### 3. remove-object-embeds.lua
 - **Purpose**: Remove standalone embedded objects and convert inline page links to plain text
 - **What it does**:
   - Finds paragraphs with only a link to Pages/*.md
   - Reads the linked file's frontmatter
   - Removes if link text matches file title
   - Converts inline page links to plain text (links won't work in hardcover books)
-- **Processing order**: Second
+- **Processing order**: Third
 - **Expandable**: Can add other object types beyond Pages
 
-#### 3. add-index-entries.lua
+#### 4. landscape-table-filter.lua
+- **Purpose**: Adaptive table orientation and styling
+- **What it does**:
+  - Analyzes table dimensions (columns, rows)
+  - Calculates natural width and content density
+  - Determines optimal orientation (portrait vs. landscape)
+  - Applies sans-serif font (Helvetica Neue)
+  - Adds zebra striping and professional formatting
+  - Defers landscape tables to dedicated pages
+- **Processing order**: Fourth
+- **Smart logic**:
+  - Portrait: Low density, fits in width (< 100%)
+  - Landscape: High density, wide (> 100%), or 15+ rows
+
+#### 5. add-index-entries.lua
 - **Purpose**: Route references to appropriate indexes
 - **What it does**:
   - Reads Capacities object metadata (type, title)
   - Routes to correct index: Books, Definitions, Organizations, People, Projects
   - Generates LaTeX `\index[category]{entry}` commands
-- **Processing order**: Third
+- **Processing order**: Fifth
 
-#### 4. tag-filter.lua
+#### 6. tag-filter.lua
 - **Purpose**: Process hashtags
 - **What it does**:
   - Finds all `#tags` in your text
   - Converts to LaTeX `\tag{}` commands
-  - Makes them appear colored in blue
+  - Applies background color highlighting (customizable per tag)
   - Adds to Tags index
   - Handles consecutive tags: `#tag1#tag2#tag3`
-- **Processing order**: Fourth (last)
+- **Processing order**: Sixth (last)
 
 ### 🔧 Build Script (`build.sh`)
 - **Purpose**: One command to convert markdown → PDF

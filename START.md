@@ -146,7 +146,13 @@ cd ~/Documents/journal-workflow
 ```
 
 **What to look for in the test PDF:**
-- **Tags in blue**: #testing, #workflow, #setup, #success, #installation, #verification
+- **Tags highlighted**: #testing, #workflow, #setup, #success, #installation, #verification with background colors
+- **Color emojis**: 😀 🚀 ☕ 💻 should render in full color
+- **Task list checkboxes**: Properly formatted checked and unchecked boxes
+- **Images and PDFs**: workflow-diagram.png and media-types-guide.pdf embedded
+- **14 comprehensive table tests**: 2-8 columns with adaptive portrait/landscape orientation
+  - Portrait tables: Low-density, narrow tables
+  - Landscape tables: Wide or high-density tables
 - **Object references indexed**: Check the 6 indexes at the back
   - Books: "Thinking Fast and Slow"
   - Definitions: "Cognitive Bias"
@@ -157,7 +163,7 @@ cd ~/Documents/journal-workflow
 - **Professional layout**: Margins, headers, page numbers
 - **PDF opens automatically** after build
 
-If the test PDF looks good, your installation is working correctly!
+If the test PDF looks good (with all tables, emojis, and indexes), your installation is working correctly!
 
 ---
 

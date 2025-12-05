@@ -79,9 +79,12 @@ open output/
 ### preprocess-capacities.sh
 ```bash
 ./preprocess-capacities.sh [title] [author] [input-file]
+./preprocess-capacities.sh [title] [author] [input-file] --toggle-deindent
 # Default title: "Journal"
 # Default author: "Julio Terra"
 # Default input: "source/journal.md"
+# --toggle-deindent: Remove 4-space indentation from Capacities toggle groups (for personal journals)
+# Default: Skip deindentation (for test files and properly structured content)
 ```
 
 ### preprocess.sh
@@ -217,13 +220,49 @@ cat output/people.ind
 
 The workflow uses Lua filters in this order:
 
-1. **task-list-filter.lua** - Preserve task list structure (placeholder)
+1. **task-list-filter.lua** - Preserve task list structure, convert checkboxes
 2. **filter-media-links.lua** - Clean media references
 3. **remove-object-embeds.lua** - Remove standalone embedded pages, convert inline page links to plain text
-4. **add-index-entries.lua** - Route objects to indexes
-5. **tag-filter.lua** - Process hashtags
+4. **landscape-table-filter.lua** - Analyze tables, apply adaptive orientation and styling
+5. **add-index-entries.lua** - Route objects to indexes
+6. **tag-filter.lua** - Process hashtags, apply background highlighting
 
-After Pandoc, sed post-processing converts checkboxes to Wingdings 2 characters and scales them to 80%.
+## 📊 Table Quick Reference
+
+### Writing Tables in Markdown
+
+```markdown
+Table: Your Caption Here
+
+| Column 1 | Column 2 | Column 3 |
+|:---------|:---------|:---------|
+| Data     | Data     | Data     |
+| Data     | Data     | Data     |
+```
+
+### Table Orientation Logic
+
+- **Portrait**: Low-density tables, fits in portrait width (< 100%)
+- **Landscape**: High-density tables, wide tables (> 100% width), or 15+ rows
+
+The filter automatically analyzes and chooses the best orientation!
+
+### Table Styling
+
+All tables get:
+- Sans-serif font (Helvetica Neue)
+- Zebra striping (alternating row colors)
+- Professional borders and spacing
+- Adaptive column widths
+
+### Testing Tables
+
+```bash
+# The test.zip includes 14 table tests
+./process-capacities-export.sh source/test.zip
+./preprocess-capacities.sh "Test" "Test User" source/journal.md
+./build.sh source/journal.md
+```
 
 ## 📇 Index Categories
 
