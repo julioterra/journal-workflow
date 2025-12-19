@@ -113,10 +113,10 @@ pandoc "$INPUT_FILE" \
   --template="$TEMPLATE" \
   --lua-filter=filters/task-list-filter.lua \
   --lua-filter=filters/remove-todo-sections.lua \
-  --lua-filter=filters/filter-media-links.lua \
   --lua-filter=filters/remove-object-embeds.lua \
-  --lua-filter=filters/landscape-table-filter.lua \
   --lua-filter=filters/add-index-entries.lua \
+  --lua-filter=filters/filter-media-links.lua \
+  --lua-filter=filters/landscape-table-filter.lua \
   --lua-filter=filters/tag-filter.lua \
   --metadata paperwidth="$PAPER_WIDTH" \
   --metadata paperheight="$PAPER_HEIGHT" \

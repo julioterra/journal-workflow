@@ -35,12 +35,15 @@ local references = load_references()
 -- Process links
 function Link(el)
   local target = el.target
-  
+
   -- Check if this is a reference link (has .md extension)
   if target:match("%.md$") then
     -- URL decode the target
     local decoded_target = url_decode(target)
-    
+
+    -- Remove ../ prefix if present (markdown uses ../People/... but references.json uses People/...)
+    decoded_target = decoded_target:gsub("^%.%./", "")
+
     -- Look up in reference map
     local ref = references[decoded_target]
     
