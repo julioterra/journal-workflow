@@ -120,6 +120,44 @@ local function is_standalone_page_link(block)
   return link_text == page_name
 end
 
+-- Helper function to check if a paragraph contains ANY .md link where text matches filename
+-- Used for removing reference links after images (not just Pages/)
+local function is_matching_md_link(block)
+  if block.t ~= "Para" then
+    return false
+  end
+
+  local link_count = 0
+  local non_space = 0
+  local md_link = nil
+
+  for _, el in ipairs(block.content) do
+    -- Match ANY .md link or capacities.io URL
+    if el.t == "Link" and (el.target:match("^https://app%.capacities%.io/") or el.target:match("%.md$")) then
+      link_count = link_count + 1
+      md_link = el
+    end
+    if el.t ~= "Space" and el.t ~= "SoftBreak" and el.t ~= "LineBreak" then
+      non_space = non_space + 1
+    end
+  end
+
+  -- Paragraph must contain only a single .md link and nothing else (except spaces)
+  if not (link_count == 1 and non_space == 1 and md_link) then
+    return false
+  end
+
+  -- Check if link text matches the page name from URL
+  local link_text = pandoc.utils.stringify(md_link.content)
+  local page_name = get_page_name_from_url(md_link.target)
+
+  -- Remove leading/trailing whitespace from both for comparison
+  link_text = link_text:match("^%s*(.-)%s*$")
+  page_name = page_name:match("^%s*(.-)%s*$")
+
+  return link_text == page_name
+end
+
 -- Remove Capacities link paragraphs (both standalone and following images/figures)
 function Pandoc(doc)
   local new_blocks = {}
@@ -152,12 +190,12 @@ function Pandoc(doc)
       is_image_block = (has_image and only_images)
     end
 
-    -- If this is an image block, check if next is a Capacities link
+    -- If this is an image block, check if next is a matching .md link
     if is_image_block and i < #doc.blocks then
       local next = doc.blocks[i + 1]
 
-      if is_standalone_page_link(next) then
-        -- Skip the link paragraph after image
+      if is_matching_md_link(next) then
+        -- Skip the .md link paragraph after image
         table.insert(new_blocks, current)
         i = i + 2
       else
