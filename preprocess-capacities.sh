@@ -76,8 +76,8 @@ sed -i '' -E 's/^(#+ .*)\[([^]]+)\]\([^)]+\)/\1\2/g' "$INPUT_FILE"
 sed -i '' 's/<!-- *\(!\[.*\](assets\/[^)]*)\) *-->/\1/g' "$INPUT_FILE"
 
 # Step 2b: Image paths - graphicspath in template handles the assets/ prefix
-sed -i '' 's#](PDFs/#](PDFs/#g' "$INPUT_FILE"
-sed -i '' 's#](Images/#](Images/#g' "$INPUT_FILE"
+sed -i '' 's#](../PDFs/#](PDFs/#g' "$INPUT_FILE"
+sed -i '' 's#](../Images/#](Images/#g' "$INPUT_FILE"
 
 # Step 2c: Remove old frontmatter
 echo "🗑️  Removing old frontmatter..."
