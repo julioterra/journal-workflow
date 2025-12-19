@@ -62,6 +62,9 @@
   {\needspace{5\baselineskip}\normalfont\Large\bfseries\color{headingcolor}}}
 \makeatother
 
+% Line spacing - slightly increased for better readability
+\linespread{1.10}
+
 % Paragraph spacing
 \setlength{\parskip}{0.8\baselineskip}  % Space between paragraphs
 \setlength{\parindent}{0pt}              % No paragraph indentation
@@ -274,14 +277,17 @@
 
 % Tag command - takes display name and original name
 % Uses background highlighting instead of text color
+% Adjusted to prevent extra vertical spacing from colorbox
 \makeatletter
 \newcommand{\tag}[2]{%
+  % Save current fboxsep and set minimal padding
+  \setlength{\fboxsep}{2pt}%
   \@ifundefined{color@tag-bg-#2}{%
     % Use default background color if tag-specific color not defined
-    \colorbox{tag-bg-default}{\#{}#1}%
+    \raisebox{0pt}[\height][0pt]{\colorbox{tag-bg-default}{\#{}#1}}%
   }{%
     % Use tag-specific background color
-    \colorbox{tag-bg-#2}{\#{}#1}%
+    \raisebox{0pt}[\height][0pt]{\colorbox{tag-bg-#2}{\#{}#1}}%
   }%
   \index[tags]{#1}%
   \xspace%
