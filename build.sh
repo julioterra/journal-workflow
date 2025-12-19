@@ -112,6 +112,7 @@ pandoc "$INPUT_FILE" \
   --to=latex \
   --template="$TEMPLATE" \
   --lua-filter=filters/task-list-filter.lua \
+  --lua-filter=filters/remove-todo-sections.lua \
   --lua-filter=filters/filter-media-links.lua \
   --lua-filter=filters/remove-object-embeds.lua \
   --lua-filter=filters/landscape-table-filter.lua \
