@@ -81,6 +81,33 @@ local function get_page_name_from_url(url)
   return filename
 end
 
+-- Helper function to normalize text for comparison
+-- Handles date format differences: "2023/11/15:" vs "20231115"
+local function normalize_for_comparison(text)
+  if not text then return "" end
+
+  -- Remove date separators (2023/11/15 -> 20231115)
+  text = text:gsub("(%d%d%d%d)/(%d%d)/(%d%d)", "%1%2%3")
+  text = text:gsub("(%d%d%d%d)_(%d%d)_(%d%d)", "%1%2%3")
+
+  -- Remove all colons, commas, periods, and apostrophes
+  text = text:gsub("[':,%.]", "")
+
+  -- Remove trailing year (e.g., " 2023" or ", 2023" at end of string)
+  text = text:gsub("%s*,?%s*%d%d%d%d%s*$", "")
+
+  -- Normalize whitespace (multiple spaces to single space)
+  text = text:gsub("%s+", " ")
+
+  -- Trim leading/trailing whitespace
+  text = text:match("^%s*(.-)%s*$")
+
+  -- Convert to lowercase for case-insensitive comparison
+  text = text:lower()
+
+  return text
+end
+
 -- Helper function to check if a paragraph contains only a Capacities Page link
 -- where the link text matches the page name
 -- NOTE: Only handles Pages/ folder - NOT People/Organizations/Projects/Books/Definitions
@@ -113,9 +140,9 @@ local function is_standalone_page_link(block)
   local link_text = pandoc.utils.stringify(capacities_link.content)
   local page_name = get_page_name_from_url(capacities_link.target)
 
-  -- Remove leading/trailing whitespace from both for comparison
-  link_text = link_text:match("^%s*(.-)%s*$")
-  page_name = page_name:match("^%s*(.-)%s*$")
+  -- Normalize both for comparison (handles date format differences)
+  link_text = normalize_for_comparison(link_text)
+  page_name = normalize_for_comparison(page_name)
 
   return link_text == page_name
 end
@@ -151,9 +178,9 @@ local function is_matching_md_link(block)
   local link_text = pandoc.utils.stringify(md_link.content)
   local page_name = get_page_name_from_url(md_link.target)
 
-  -- Remove leading/trailing whitespace from both for comparison
-  link_text = link_text:match("^%s*(.-)%s*$")
-  page_name = page_name:match("^%s*(.-)%s*$")
+  -- Normalize both for comparison (handles date format differences)
+  link_text = normalize_for_comparison(link_text)
+  page_name = normalize_for_comparison(page_name)
 
   return link_text == page_name
 end
