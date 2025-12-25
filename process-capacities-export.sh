@@ -122,31 +122,77 @@ type: Combined
 
 EOF
 
-# Find and sort all daily note files
+# Check if CSV file exists to filter daily notes
+CSV_FILE="$EXPORT_DIR/Daily Notes (All).csv"
 daily_note_count=0
+
 if [ -d "$EXPORT_DIR/DailyNotes" ]; then
-    # Use process substitution to avoid subshell issues
-    while IFS= read -r file; do
-        filename=$(basename "$file" .md)
-        echo "  + $filename"
+    if [ -f "$CSV_FILE" ]; then
+        echo "  📋 Using CSV filter: Daily Notes (All).csv"
 
-        # Extract date from filename and format as heading
-        if [[ $filename =~ ^([0-9]{4})-([0-9]{2})-([0-9]{2})$ ]]; then
-            # Convert YYYY-MM-DD to readable format
-            date_formatted=$(date -j -f "%Y-%m-%d" "$filename" "+%B %d, %Y" 2>/dev/null || echo "$filename")
-            echo -e "\n# $date_formatted\n" >> "$OUTPUT_FILE"
-        else
-            echo -e "\n# $filename\n" >> "$OUTPUT_FILE"
-        fi
+        # Extract file paths from CSV (4th column, skip header)
+        # CSV format: title; date; tags; reference
+        # Reference column contains: ./DailyNotes/2023-12-30.md
+        # Sort by date column (2nd field) in ascending order (oldest first)
+        while IFS=';' read -r title date tags reference; do
+            # Skip header line
+            if [[ "$reference" == *"./DailyNotes/"* ]]; then
+                # Clean up the path (remove leading ./ and spaces)
+                relative_path=$(echo "$reference" | sed 's/^ *//;s/ *$//' | sed 's|^\./||')
+                file="$EXPORT_DIR/$relative_path"
 
-        # Skip front matter and append content
-        awk '/^---$/ {p++; next} p >= 2' "$file" >> "$OUTPUT_FILE"
-        echo "" >> "$OUTPUT_FILE"
+                if [ -f "$file" ]; then
+                    filename=$(basename "$file" .md)
+                    echo "  + $filename"
 
-        daily_note_count=$((daily_note_count + 1))
-    done < <(find "$EXPORT_DIR/DailyNotes" -name "*.md" -type f | sort)
+                    # Extract date from filename and format as heading
+                    if [[ $filename =~ ^([0-9]{4})-([0-9]{2})-([0-9]{2})$ ]]; then
+                        # Convert YYYY-MM-DD to readable format
+                        date_formatted=$(date -j -f "%Y-%m-%d" "$filename" "+%B %d, %Y" 2>/dev/null || echo "$filename")
+                        echo -e "\n# $date_formatted\n" >> "$OUTPUT_FILE"
+                    else
+                        echo -e "\n# $filename\n" >> "$OUTPUT_FILE"
+                    fi
 
-    echo -e "${GREEN}  ✓ Combined $daily_note_count daily notes${NC}"
+                    # Skip front matter and append content
+                    awk '/^---$/ {p++; next} p >= 2' "$file" >> "$OUTPUT_FILE"
+                    echo "" >> "$OUTPUT_FILE"
+
+                    daily_note_count=$((daily_note_count + 1))
+                else
+                    echo -e "${YELLOW}  ⚠ File not found: $relative_path${NC}"
+                fi
+            fi
+        done < <(tail -n +2 "$CSV_FILE" | sort -t';' -k2,2)
+
+        echo -e "${GREEN}  ✓ Combined $daily_note_count daily notes from CSV${NC}"
+    else
+        # Fallback: process all files if CSV doesn't exist
+        echo -e "${YELLOW}  ⚠ CSV file not found, processing all daily notes${NC}"
+
+        # Use process substitution to avoid subshell issues
+        while IFS= read -r file; do
+            filename=$(basename "$file" .md)
+            echo "  + $filename"
+
+            # Extract date from filename and format as heading
+            if [[ $filename =~ ^([0-9]{4})-([0-9]{2})-([0-9]{2})$ ]]; then
+                # Convert YYYY-MM-DD to readable format
+                date_formatted=$(date -j -f "%Y-%m-%d" "$filename" "+%B %d, %Y" 2>/dev/null || echo "$filename")
+                echo -e "\n# $date_formatted\n" >> "$OUTPUT_FILE"
+            else
+                echo -e "\n# $filename\n" >> "$OUTPUT_FILE"
+            fi
+
+            # Skip front matter and append content
+            awk '/^---$/ {p++; next} p >= 2' "$file" >> "$OUTPUT_FILE"
+            echo "" >> "$OUTPUT_FILE"
+
+            daily_note_count=$((daily_note_count + 1))
+        done < <(find "$EXPORT_DIR/DailyNotes" -name "*.md" -type f | sort)
+
+        echo -e "${GREEN}  ✓ Combined $daily_note_count daily notes${NC}"
+    fi
 else
     echo -e "${RED}  ⚠ Warning: DailyNotes directory not found${NC}"
 fi
