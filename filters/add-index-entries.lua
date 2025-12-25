@@ -10,6 +10,25 @@ local function url_decode(str)
   return str
 end
 
+-- Escape special LaTeX characters for use in index entries
+local function escape_latex(str)
+  if not str then return "" end
+
+  -- Escape special LaTeX characters
+  str = string.gsub(str, "\\", "\\textbackslash{}")
+  str = string.gsub(str, "&", "\\&")
+  str = string.gsub(str, "%%", "\\%%")
+  str = string.gsub(str, "%$", "\\$")
+  str = string.gsub(str, "#", "\\#")
+  str = string.gsub(str, "_", "\\_")
+  str = string.gsub(str, "{", "\\{")
+  str = string.gsub(str, "}", "\\}")
+  str = string.gsub(str, "~", "\\textasciitilde{}")
+  str = string.gsub(str, "%^", "\\textasciicircum{}")
+
+  return str
+end
+
 -- Load reference map
 local function load_references()
   local file = io.open("source/references.json", "r")
@@ -50,7 +69,9 @@ function Link(el)
     if ref then
       -- Route to type-specific index (e.g., People → people index)
       local index_name = ref.type:lower()
-      local index_latex = string.format("\\index[%s]{%s}", index_name, ref.name)
+      -- Escape special LaTeX characters in the name
+      local escaped_name = escape_latex(ref.name)
+      local index_latex = string.format("\\index[%s]{%s}", index_name, escaped_name)
       
       -- Return the link text followed by invisible index entry (no mbox)
       return {
