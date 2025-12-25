@@ -8,7 +8,6 @@ SKIP_DEINDENT=true
 TITLE="${1:-Journal}"
 AUTHOR="${2:-Julio Terra}"
 INPUT_FILE="${3:-source/journal.md}"
-VOLUME="${4:-Volume 1}"
 
 # Check for --toggle-deindent flag
 for arg in "$@"; do
@@ -18,7 +17,7 @@ for arg in "$@"; do
 done
 
 if [ $# -eq 0 ]; then
-    echo "Usage: ./preprocess-capacities.sh [title] [author] [input-file] [volume] [--toggle-deindent]"
+    echo "Usage: ./preprocess-capacities.sh [title] [author] [input-file] [--toggle-deindent]"
     echo "  --toggle-deindent: Remove 4-space indentation from Capacities toggle groups"
     exit 1
 fi
@@ -95,6 +94,12 @@ echo "📋 Step 3: Updating frontmatter..."
 FIRST_DATE=$(grep -m 1 "^# [A-Z]" "$INPUT_FILE" | sed 's/^# //')
 LAST_DATE=$(grep "^# [A-Z]" "$INPUT_FILE" | tail -1 | sed 's/^# //')
 
+# Extract year, start month, and end month
+# Expected format: "Month DD, YYYY"
+YEAR=$(echo "$LAST_DATE" | sed -E 's/.*, ([0-9]{4})$/\1/')
+START_MONTH=$(echo "$FIRST_DATE" | sed -E 's/^([A-Za-z]+).*/\1/' | tr '[:lower:]' '[:upper:]')
+END_MONTH=$(echo "$LAST_DATE" | sed -E 's/^([A-Za-z]+).*/\1/' | tr '[:lower:]' '[:upper:]')
+
 # Remove old frontmatter (from first --- to second ---, inclusive)
 # Use awk instead of complex sed for better compatibility
 awk 'BEGIN{p=1} /^---$/{if(p){p=0;next}else{p=1;next}} p' "$INPUT_FILE" > "${INPUT_FILE}.tmp" && mv "${INPUT_FILE}.tmp" "$INPUT_FILE"
@@ -105,7 +110,9 @@ cat > temp_frontmatter.md << EOF
 title: $TITLE
 author: $AUTHOR
 dates: $FIRST_DATE - $LAST_DATE
-volume: $VOLUME
+year: $YEAR
+start_month: $START_MONTH
+end_month: $END_MONTH
 ---
 
 EOF
@@ -115,7 +122,7 @@ cat temp_frontmatter.md "$INPUT_FILE" > temp_journal.md
 mv temp_journal.md "$INPUT_FILE"
 rm temp_frontmatter.md
 
-echo "  ✓ Frontmatter updated: $FIRST_DATE - $LAST_DATE"
+echo "  ✓ Frontmatter updated: $YEAR ($START_MONTH - $END_MONTH)"
 
 # Step 4: Find and convert PDFs, handle multi-page
 echo "🖼️  Converting PDFs to JPG..."

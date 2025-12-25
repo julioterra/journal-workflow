@@ -348,8 +348,12 @@ $if(title)$
 \vspace*{\fill}
 
 % Title - very large bold
-{\Huge\bfseries $title$\par}
-\vspace{0.5em}
+{\fontsize{27pt}{32pt}\selectfont\bfseries $title$\par}
+\vspace{-0.5em}
+
+% Small rule between title and author (hairline)
+{\centering\rule{2.5in}{0.1pt}\par}
+\vspace{1em}
 
 % Page dimensions - medium italic (commented out - for testing only)
 %$if(pagedimensions)$
@@ -357,9 +361,9 @@ $if(title)$
 %\vspace{0.5em}
 %$endif$
 
-% Author - medium non-bold
+% Author - medium normal case
 $if(author)$
-{\LARGE $author$\par}
+{\fontsize{15pt}{18pt}\selectfont $author$\par}
 %\vspace{4em}
 $endif$
 
@@ -367,16 +371,18 @@ $endif$
 \vspace*{\fill}
 \vspace*{\fill}
 
-% Volume - medium bold
-$if(volume)$
-{\large\itshape\bfseries \volume\par}
-\vspace{-0.4em}
+% Year - large bold
+$if(year)$
+{\Huge\bfseries $year$\par}
+\vspace{0.5em}
 $endif$
 
-% Date Range - large bold
-$if(dates)$
-{\large\itshape \dates\par}
+% Month Range - small capitalized
+$if(start_month)$
+$if(end_month)$
+{\normalsize $start_month$ - $end_month$\par}
 \vspace{4em}
+$endif$
 $endif$
 
 
