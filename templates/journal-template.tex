@@ -120,29 +120,34 @@
 \usepackage{fancyhdr}
 \pagestyle{fancy}
 \fancyhf{}
-%\fancyhead[LE,RO]{\small\textit{\leftmark}}
-%\fancyhead[RO]{\small\textit{\rightmark}}
-\fancyfoot[LO,RE]{\small\textit{\leftmark}}
-\fancyfoot[LE,RO]{\thepage}
-\renewcommand{\headrulewidth}{0pt}
-\renewcommand{\footrulewidth}{0.4pt}
+% Header: Chapter title centered in small caps
+\fancyhead[C]{\small\textsc{\leftmark}}
+% Header: Page numbers in outer corners
+\fancyhead[LE,RO]{\thepage}
+% Rule under header - thinner line
+\renewcommand{\headrulewidth}{0.2pt}
+\renewcommand{\footrulewidth}{0pt}
+% Add space below header
+\setlength{\headsep}{18pt}
 
 % Chapter and Section Styling
 \usepackage{titlesec}
 % title stilling. Remove "chapter X". Leave title only.
-\titleformat{\chapter}[hang]
-  {\normalfont\Huge\bfseries}
+% Font size reduced by ~30% from original (using \LARGE instead of \Huge)
+% All headings centered
+\titleformat{\chapter}[block]
+  {\normalfont\LARGE\bfseries\centering}
   {}{0pt}{}
 \titlespacing*{\chapter}
-  {0pt}{-20pt}{1.5em} % tight top/bottom spacing; tweak as you like
-% section stylling. Adjust font size and color
+  {0pt}{30pt}{3em} % moved down more on page and added space before content
+% section stylling. 2pt larger than body (body is 8pt, so sections are 10pt)
 \titleformat{\section}
-  {\normalfont\Large\bfseries\color{headingcolor}\raggedright}
+  {\fontseries{sb}\fontsize{10pt}{12pt}\selectfont\color{headingcolor}\centering}
   {\thesection}{1em}{}
 \titlespacing{\section}{0pt}{5pt}{5pt}
-% subsection styling. Adjust font size and color
+% subsection styling. 2pt larger than body (body is 8pt, so subsections are 10pt)
 \titleformat{\subsection}
-  {\normalfont\large\bfseries\color{headingcolor}\raggedright}
+  {\fontseries{sb}\fontsize{10pt}{12pt}\selectfont\color{headingcolor}\centering}
   {\thesubsection}{1em}{}
 
 % --- prevent page break before chapters (book/report insert a clearpage) ---
