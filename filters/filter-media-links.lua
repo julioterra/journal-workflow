@@ -91,7 +91,11 @@ local function normalize_for_comparison(text)
   text = text:gsub("(%d%d%d%d)_(%d%d)_(%d%d)", "%1%2%3")
 
   -- Remove all colons, commas, periods, and apostrophes
-  text = text:gsub("[':,%.]", "")
+  text = text:gsub(":", "")
+  text = text:gsub(",", "")
+  text = text:gsub("%.", "")
+  text = text:gsub("'", "")  -- straight apostrophe (0x27)
+  text = text:gsub(string.char(0xe2, 0x80, 0x99), "")  -- curly apostrophe (U+2019)
 
   -- Remove trailing year (e.g., " 2023" or ", 2023" at end of string)
   text = text:gsub("%s*,?%s*%d%d%d%d%s*$", "")
@@ -179,10 +183,10 @@ local function is_matching_md_link(block)
   local page_name = get_page_name_from_url(md_link.target)
 
   -- Normalize both for comparison (handles date format differences)
-  link_text = normalize_for_comparison(link_text)
-  page_name = normalize_for_comparison(page_name)
+  local norm_link_text = normalize_for_comparison(link_text)
+  local norm_page_name = normalize_for_comparison(page_name)
 
-  return link_text == page_name
+  return norm_link_text == norm_page_name
 end
 
 -- Remove Capacities link paragraphs (both standalone and following images/figures)
