@@ -42,11 +42,11 @@
 \usepackage[
   paperwidth=$paperwidth$,
   paperheight=$paperheight$,
-  top=$if(geometry.top)$$geometry.top$$else$0.75in$endif$,
-  bottom=$if(geometry.bottom)$$geometry.bottom$$else$0.75in$endif$,
-  inner=$if(geometry.inner)$$geometry.inner$$else$0.875in$endif$,
-  outer=$if(geometry.outer)$$geometry.outer$$else$0.625in$endif$,
-  bindingoffset=$if(geometry.bindingoffset)$$geometry.bindingoffset$$else$0.25in$endif$
+  top=$if(margintop)$$margintop$$else$0.75in$endif$,
+  bottom=$if(marginbottom)$$marginbottom$$else$0.75in$endif$,
+  inner=$if(margininner)$$margininner$$else$0.875in$endif$,
+  outer=$if(marginouter)$$marginouter$$else$0.625in$endif$,
+  bindingoffset=$if(marginbinding)$$marginbinding$$else$0.25in$endif$
 ]{geometry}
 % Prevent vertical stretching to fill pages
 \raggedbottom
@@ -255,6 +255,7 @@
 % Add spacing around figures (space above and below when placed in text)
 \setlength{\intextsep}{24pt plus 4pt minus 2pt}  % Space above/below in-text figures
 \setlength{\textfloatsep}{18pt plus 4pt minus 2pt}  % Space for top/bottom floats
+
 
 % Hyperlinks
 \usepackage{hyperref}
@@ -526,5 +527,10 @@ $body$
 
 \if@restonecol\onecolumn\fi
 \makeatother
+
+% Add one blank page at the end for easy copy/paste padding
+\clearpage
+\thispagestyle{empty}
+\mbox{}
 
 \end{document}
