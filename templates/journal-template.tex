@@ -343,6 +343,7 @@ $endif$
 
 % Front Matter
 \frontmatter
+\pagestyle{empty}  % Remove headers from front matter pages
 
 % Custom title page
 $if(title)$
@@ -403,6 +404,7 @@ $endif$
 
 % Main Content
 \mainmatter
+\pagestyle{fancy}  % Restore headers for main content
 
 $body$
 
