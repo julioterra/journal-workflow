@@ -89,11 +89,11 @@
 
 % Colors
 \usepackage{xcolor}
-\definecolor{linkcolor}{RGB}{70,70,120}      % Steel blue for links
+\definecolor{linkcolor}{RGB}{0,0,0}      % Black for links (same as text)
 \definecolor{headingcolor}{RGB}{0,0,0}     % Black
 
 % Tag background colors (for highlighting)
-\definecolor{tag-bg-default}{RGB}{255,245,157}     % Light yellow highlight (default)
+\definecolor{tag-bg-default}{RGB}{220,235,255}     % Light blue highlight (default)
 
 % Define custom highlight colors for specific tags below:
 % Emotions - negative (red/pink tones)
@@ -275,6 +275,10 @@
 \g@addto@macro{\UrlBreaks}{\UrlOrds}  % Allow breaks at normal characters
 \makeatother
 
+% Endnotes - convert footnotes to endnotes at back of book
+\usepackage{endnotes}
+\let\footnote=\endnote  % Redirect all footnotes to endnotes
+
 % Index Generation - Separate index for each type
 \usepackage{imakeidx}
 \makeindex[name=people,title=People,columns=2]
@@ -404,6 +408,30 @@ $body$
 
 % Back Matter
 \backmatter
+
+% Ensure Notes starts on a right (odd) page with blank left page
+\clearpage
+\ifodd\value{page}
+  % About to write on odd page - previous even page has content
+  % Need to add blank odd, then blank even, so Notes starts on next odd
+  \thispagestyle{empty}\mbox{}\clearpage
+  \thispagestyle{empty}\mbox{}\clearpage
+\else
+  % About to write on even page - previous odd page has content
+  % Add blank even page, Notes starts on next odd
+  \thispagestyle{empty}\mbox{}\clearpage
+\fi
+
+% Print endnotes (HTTP/HTTPS link references)
+\begingroup
+\parindent 0pt
+\parskip 2ex
+\def\enotesize{\normalsize}
+\theendnotes
+\thispagestyle{plain}  % No header on Notes section
+\endgroup
+
+\clearpage
 
 % Index formatting
 \setlength{\columnsep}{2cm}
