@@ -212,6 +212,7 @@ pandoc "$INPUT_FILE" \
   --lua-filter=filters/http-links-to-footnotes.lua \
   --lua-filter=filters/landscape-table-filter.lua \
   --lua-filter=filters/tag-filter.lua \
+  --lua-filter=filters/image-page-filter.lua \
   --metadata paperwidth="$PAPER_WIDTH" \
   --metadata paperheight="$PAPER_HEIGHT" \
   --metadata pagedimensions="$PAPER_WIDTH × $PAPER_HEIGHT" \

@@ -199,6 +199,7 @@
 \usepackage{tabularx}
 \usepackage{caption}  % For caption formatting
 \usepackage{pdflscape}  % For landscape table rotation
+\usepackage{rotating}  % For rotating landscape images
 \usepackage[table]{xcolor}  % For zebra striping
 \setlength{\LTpre}{0pt}
 \setlength{\LTpost}{0pt}
@@ -230,14 +231,8 @@
 % Calculate max dimensions based on orientation
 \makeatletter
 \def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
-% For portrait images (taller than wide), use less height
-\def\maxheight{%
-  \ifdim\Gin@nat@height>\Gin@nat@width
-    0.9\textheight % Portrait: max 50% of page height
-  \else
-    0.9\textheight % Landscape: max 70% of page height
-  \fi
-}
+% Leave space for captions (70% of page height to ensure room for sideways captions)
+\def\maxheight{0.7\textheight}
 \makeatother
 
 % Apply scaling
@@ -255,7 +250,6 @@
 % Add spacing around figures (space above and below when placed in text)
 \setlength{\intextsep}{24pt plus 4pt minus 2pt}  % Space above/below in-text figures
 \setlength{\textfloatsep}{18pt plus 4pt minus 2pt}  % Space for top/bottom floats
-
 
 % Hyperlinks
 \usepackage{hyperref}
