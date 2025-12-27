@@ -67,9 +67,11 @@ function Figure(fig)
   -- Try to get image dimensions
   local width, height = get_image_dimensions(img_src)
   local is_landscape = false
+  local aspect_ratio = nil
 
   if width and height then
     is_landscape = width > height
+    aspect_ratio = height / width
   end
 
   -- Build LaTeX wrapper
@@ -78,7 +80,7 @@ function Figure(fig)
   -- Clear page before image
   blocks:insert(pandoc.RawBlock('latex', '\\clearpage'))
 
-  -- Choose figure environment based on orientation
+  -- Choose figure environment and sizing based on orientation and aspect ratio
   if is_landscape then
     blocks:insert(pandoc.RawBlock('latex', '\\begin{sidewaysfigure}[p]'))
     blocks:insert(pandoc.RawBlock('latex', '\\centering'))
@@ -90,8 +92,14 @@ function Figure(fig)
   else
     blocks:insert(pandoc.RawBlock('latex', '\\begin{figure}[p]'))
     blocks:insert(pandoc.RawBlock('latex', '\\centering'))
-    -- For portrait images: standard constraints
-    blocks:insert(pandoc.RawBlock('latex', '\\includegraphics[width=\\textwidth,height=0.7\\textheight,keepaspectratio]{' .. url_decode(img.src) .. '}'))
+    -- For portrait images: adjust constraints based on aspect ratio
+    if aspect_ratio and aspect_ratio > 1.5 then
+      -- Very tall/narrow portrait: prioritize height to fill vertical space
+      blocks:insert(pandoc.RawBlock('latex', '\\includegraphics[width=0.9\\textwidth,height=0.85\\textheight,keepaspectratio]{' .. url_decode(img.src) .. '}'))
+    else
+      -- Regular portrait: balanced constraints
+      blocks:insert(pandoc.RawBlock('latex', '\\includegraphics[width=\\textwidth,height=0.7\\textheight,keepaspectratio]{' .. url_decode(img.src) .. '}'))
+    end
   end
 
   -- Add caption if present (escape LaTeX special characters)
