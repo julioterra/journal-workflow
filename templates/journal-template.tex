@@ -193,6 +193,38 @@
 \providecommand{\tightlist}{%
   \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
 
+% ============================================================================
+% BLOCKQUOTE STYLING
+% ============================================================================
+% Styled with background color and left border
+\usepackage{changepage}
+\usepackage{mdframed}
+\definecolor{quotebg}{RGB}{245,245,250}
+\definecolor{quoteborder}{RGB}{80,120,160}
+\renewenvironment{quote}{%
+  \par\vspace{1.5\baselineskip}%
+  \begin{adjustwidth}{0.25in}{0.25in}%
+  \begin{mdframed}[
+    backgroundcolor=quotebg,
+    linecolor=quoteborder,
+    linewidth=4pt,
+    topline=false,
+    rightline=false,
+    bottomline=false,
+    innerleftmargin=10pt,
+    innerrightmargin=10pt,
+    innertopmargin=14pt,
+    innerbottommargin=14pt,
+    skipabove=0pt,
+    skipbelow=0pt
+  ]%
+}{%
+  \end{mdframed}%
+  \end{adjustwidth}%
+}
+\let\quotation\quote
+\let\endquotation\endquote
+
 % Tables
 \usepackage{longtable,booktabs,array}
 \usepackage{calc}
