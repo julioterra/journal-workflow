@@ -9,14 +9,15 @@ set -e
 KEEP_OUTPUT=false
 INPUT_FILE=""
 PUBLISHER=""
-BLEED=""
-TRIM_WIDTH=""
-TRIM_HEIGHT=""
-MARGIN_TOP=""
-MARGIN_BOTTOM=""
-MARGIN_INNER=""
-MARGIN_OUTER=""
-BINDING_OFFSET=""
+CLI_BLEED_VERTICAL=""
+CLI_BLEED_HORIZONTAL=""
+CLI_TRIM_WIDTH=""
+CLI_TRIM_HEIGHT=""
+CLI_MARGIN_TOP=""
+CLI_MARGIN_BOTTOM=""
+CLI_MARGIN_INNER=""
+CLI_MARGIN_OUTER=""
+CLI_BINDING_OFFSET=""
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -28,44 +29,48 @@ while [[ $# -gt 0 ]]; do
             PUBLISHER="$2"
             shift 2
             ;;
-        --bleed)
-            BLEED="$2"
+        --bleed-vertical)
+            CLI_BLEED_VERTICAL="$2"
+            shift 2
+            ;;
+        --bleed-horizontal)
+            CLI_BLEED_HORIZONTAL="$2"
             shift 2
             ;;
         --trim-width)
-            TRIM_WIDTH="$2"
+            CLI_TRIM_WIDTH="$2"
             shift 2
             ;;
         --trim-height)
-            TRIM_HEIGHT="$2"
+            CLI_TRIM_HEIGHT="$2"
             shift 2
             ;;
         --paperwidth)
-            TRIM_WIDTH="$2"
+            CLI_TRIM_WIDTH="$2"
             shift 2
             ;;
         --paperheight)
-            TRIM_HEIGHT="$2"
+            CLI_TRIM_HEIGHT="$2"
             shift 2
             ;;
         --top)
-            MARGIN_TOP="$2"
+            CLI_MARGIN_TOP="$2"
             shift 2
             ;;
         --bottom)
-            MARGIN_BOTTOM="$2"
+            CLI_MARGIN_BOTTOM="$2"
             shift 2
             ;;
         --inner)
-            MARGIN_INNER="$2"
+            CLI_MARGIN_INNER="$2"
             shift 2
             ;;
         --outer)
-            MARGIN_OUTER="$2"
+            CLI_MARGIN_OUTER="$2"
             shift 2
             ;;
         --bindingoffset)
-            BINDING_OFFSET="$2"
+            CLI_BINDING_OFFSET="$2"
             shift 2
             ;;
         *)
@@ -85,6 +90,17 @@ if [ -n "$PUBLISHER" ]; then
     echo "📋 Loading publisher configuration: $PUBLISHER"
     source "$PUBLISHER_CONFIG"
 fi
+
+# Apply command-line overrides (command-line arguments take precedence)
+[ -n "$CLI_BLEED_VERTICAL" ] && BLEED_VERTICAL="$CLI_BLEED_VERTICAL"
+[ -n "$CLI_BLEED_HORIZONTAL" ] && BLEED_HORIZONTAL="$CLI_BLEED_HORIZONTAL"
+[ -n "$CLI_TRIM_WIDTH" ] && TRIM_WIDTH="$CLI_TRIM_WIDTH"
+[ -n "$CLI_TRIM_HEIGHT" ] && TRIM_HEIGHT="$CLI_TRIM_HEIGHT"
+[ -n "$CLI_MARGIN_TOP" ] && MARGIN_TOP="$CLI_MARGIN_TOP"
+[ -n "$CLI_MARGIN_BOTTOM" ] && MARGIN_BOTTOM="$CLI_MARGIN_BOTTOM"
+[ -n "$CLI_MARGIN_INNER" ] && MARGIN_INNER="$CLI_MARGIN_INNER"
+[ -n "$CLI_MARGIN_OUTER" ] && MARGIN_OUTER="$CLI_MARGIN_OUTER"
+[ -n "$CLI_BINDING_OFFSET" ] && BINDING_OFFSET="$CLI_BINDING_OFFSET"
 
 # Set defaults if not specified (either by publisher config or command line)
 BLEED_VERTICAL="${BLEED_VERTICAL:-0.125in}"
@@ -151,12 +167,13 @@ if [ -z "$INPUT_FILE" ]; then
     echo "Usage: ./build.sh <input.md> [OPTIONS]"
     echo ""
     echo "Publisher Presets:"
-    echo "  --publisher <name>     Load publisher configuration (e.g., blurb)"
+    echo "  --publisher <name>         Load publisher configuration (e.g., blurb)"
     echo ""
     echo "Print Specifications:"
-    echo "  --bleed <size>         Bleed amount (default: 0in)"
-    echo "  --trim-width <size>    Trim width (default: 6in)"
-    echo "  --trim-height <size>   Trim height (default: 9in)"
+    echo "  --bleed-vertical <size>    Vertical bleed/top+bottom (default: 0.125in)"
+    echo "  --bleed-horizontal <size>  Horizontal bleed/left+right (default: 0.075in)"
+    echo "  --trim-width <size>        Trim width (default: 6in)"
+    echo "  --trim-height <size>       Trim height (default: 9in)"
     echo ""
     echo "Margins:"
     echo "  --top <size>           Top margin (default: 0.75in)"
@@ -170,8 +187,8 @@ if [ -z "$INPUT_FILE" ]; then
     echo ""
     echo "Examples:"
     echo "  ./build.sh source/journal.md --publisher blurb"
-    echo "  ./build.sh source/journal.md --trim-width 5in --trim-height 8in --bleed 0.125in"
-    echo "  ./build.sh source/journal.md --publisher blurb --bleed 0.15in"
+    echo "  ./build.sh source/journal.md --trim-width 5in --trim-height 8in --bleed-vertical 0.125in --bleed-horizontal 0.075in"
+    echo "  ./build.sh source/journal.md --publisher blurb --bleed-vertical 0.15in --bleed-horizontal 0.1in"
     exit 1
 fi
 
