@@ -90,11 +90,11 @@ fi
 BLEED="${BLEED:-0in}"
 TRIM_WIDTH="${TRIM_WIDTH:-6in}"
 TRIM_HEIGHT="${TRIM_HEIGHT:-9in}"
-MARGIN_TOP="${MARGIN_TOP:-0.75in}"
-MARGIN_BOTTOM="${MARGIN_BOTTOM:-0.75in}"
+MARGIN_TOP="${MARGIN_TOP:-0.85in}"
+MARGIN_BOTTOM="${MARGIN_BOTTOM:-0.85in}"
 MARGIN_INNER="${MARGIN_INNER:-0.875in}"
 MARGIN_OUTER="${MARGIN_OUTER:-0.625in}"
-BINDING_OFFSET="${BINDING_OFFSET:-0.25in}"
+BINDING_OFFSET="${BINDING_OFFSET:-0in}"
 
 # Calculate paper dimensions (trim + bleed on all sides)
 # Convert measurements to points for calculation
