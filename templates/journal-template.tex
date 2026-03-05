@@ -324,17 +324,16 @@
 % Adjusted to prevent extra vertical spacing from colorbox
 \makeatletter
 \newcommand{\tag}[2]{%
-  % Save current fboxsep and set minimal padding
-  \setlength{\fboxsep}{2pt}%
+  \setlength{\fboxsep}{0pt}%
   \@ifundefined{color@tag-bg-#2}{%
     % Use default background color if tag-specific color not defined
-    \raisebox{0pt}[\height][0pt]{\colorbox{tag-bg-default}{\#{}#1}}%
+    \colorbox{tag-bg-default}{\strut\kern3pt\smash{#1}\kern3pt}%
   }{%
     % Use tag-specific background color
-    \raisebox{0pt}[\height][0pt]{\colorbox{tag-bg-#2}{\#{}#1}}%
+    \colorbox{tag-bg-#2}{\strut\kern3pt\smash{#1}\kern3pt}%
   }%
   \index[tags]{#1}%
-  \xspace%
+  \xspace\hspace{0.5pt}%
 }
 \makeatother
 
