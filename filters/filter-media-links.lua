@@ -186,7 +186,10 @@ local function is_matching_md_link(block)
   local norm_link_text = normalize_for_comparison(link_text)
   local norm_page_name = normalize_for_comparison(page_name)
 
-  return norm_link_text == norm_page_name
+  -- Accept exact match OR link text that starts with the page name
+  -- (handles " - Notes" and similar suffixes Capacities appends)
+  return norm_link_text == norm_page_name or
+         norm_link_text:sub(1, #norm_page_name) == norm_page_name
 end
 
 -- Remove Capacities link paragraphs (both standalone and following images/figures)
