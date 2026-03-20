@@ -13,7 +13,7 @@ function Figure(el)
           local src = inline.src or ""
           -- io.stderr:write("DEBUG: Found Image with src: " .. src .. "\n")
           
-          if src:match("%.mp4$") or src:match("%.mov$") or src:match("%.avi$") or 
+          if src:match("%.mp4$") or src:match("%.mov$") or src:match("%.avi$") or
              src:match("%.mkv$") or src:match("%.webm$") then
             -- io.stderr:write("DEBUG: REMOVING VIDEO!\n")
             return {}

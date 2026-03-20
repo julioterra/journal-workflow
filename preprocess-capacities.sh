@@ -154,12 +154,12 @@ grep -nE '!\[.*\]\(.*\.pdf\)' "$INPUT_FILE" | while IFS=: read line_num full_lin
     pdf_ref=$(echo "$full_line" | grep -oE '\]\(.*\.pdf\)' | sed 's/^..//' | sed 's/)$//' | sed 's/%20/ /g')
     jpg_base="${pdf_ref%.pdf}"
     
-    # Check if it's multi-page
-    if [ -f "${jpg_base}-0.jpg" ]; then
+    # Check if it's multi-page (process-capacities-export.sh puts JPGs in assets/)
+    if [ -f "assets/${jpg_base}-0.jpg" ]; then
         # Multi-page: create references for all pages
         page_num=0
         new_lines=""
-        while [ -f "${jpg_base}-${page_num}.jpg" ]; do
+        while [ -f "assets/${jpg_base}-${page_num}.jpg" ]; do
             if [ $page_num -gt 0 ]; then
                 new_lines="${new_lines}\n"
             fi
