@@ -90,15 +90,33 @@ sed -i '' '/^___$/d' "$INPUT_FILE"
 # Step 3: Replace frontmatter with custom metadata
 echo "📋 Step 3: Updating frontmatter..."
 
-# Extract first and last dates from top-level headings (# Date format)
-FIRST_DATE=$(grep -m 1 "^# [A-Z]" "$INPUT_FILE" | sed 's/^# //')
-LAST_DATE=$(grep "^# [A-Z]" "$INPUT_FILE" | tail -1 | sed 's/^# //')
+# Read date range from CSV in export directory (authoritative source)
+CSV_FILE=$(find source/capacities-export -maxdepth 1 -name "*.csv" 2>/dev/null | head -1)
+
+if [ -n "$CSV_FILE" ]; then
+    echo "  📋 Reading date range from: $(basename "$CSV_FILE")"
+    FIRST_ISO=$(tail -n +2 "$CSV_FILE" | awk -F';' '{print $2}' | tr -d ' ' | sort | head -1)
+    LAST_ISO=$(tail -n +2 "$CSV_FILE" | awk -F';' '{print $2}' | tr -d ' ' | sort | tail -1)
+    FIRST_DATE=$(date -jf "%Y-%m-%d" "$FIRST_ISO" "+%B %d, %Y" 2>/dev/null || echo "$FIRST_ISO")
+    LAST_DATE=$(date -jf "%Y-%m-%d" "$LAST_ISO" "+%B %d, %Y" 2>/dev/null || echo "$LAST_ISO")
+else
+    echo "  ⚠ No CSV found, falling back to journal headings"
+    FIRST_DATE=$(grep -m 1 "^# [A-Z]" "$INPUT_FILE" | sed 's/^# //')
+    LAST_DATE=$(grep "^# [A-Z]" "$INPUT_FILE" | tail -1 | sed 's/^# //')
+fi
 
 # Extract year, start month, and end month
 # Expected format: "Month DD, YYYY"
 YEAR=$(echo "$LAST_DATE" | sed -E 's/.*, ([0-9]{4})$/\1/')
 START_MONTH=$(echo "$FIRST_DATE" | sed -E 's/^([A-Za-z]+).*/\1/' | tr '[:lower:]' '[:upper:]')
 END_MONTH=$(echo "$LAST_DATE" | sed -E 's/^([A-Za-z]+).*/\1/' | tr '[:lower:]' '[:upper:]')
+
+# Only include end_month in frontmatter if it differs from start_month
+if [ "$START_MONTH" = "$END_MONTH" ]; then
+    END_MONTH_LINE=""
+else
+    END_MONTH_LINE="end_month: $END_MONTH"
+fi
 
 # Remove old frontmatter (from first --- to second ---, inclusive)
 # Use awk instead of complex sed for better compatibility
@@ -112,7 +130,7 @@ author: $AUTHOR
 dates: $FIRST_DATE - $LAST_DATE
 year: $YEAR
 start_month: $START_MONTH
-end_month: $END_MONTH
+$END_MONTH_LINE
 ---
 
 EOF
@@ -122,7 +140,11 @@ cat temp_frontmatter.md "$INPUT_FILE" > temp_journal.md
 mv temp_journal.md "$INPUT_FILE"
 rm temp_frontmatter.md
 
-echo "  ✓ Frontmatter updated: $YEAR ($START_MONTH - $END_MONTH)"
+if [ -n "$END_MONTH_LINE" ]; then
+    echo "  ✓ Frontmatter updated: $YEAR ($START_MONTH - $END_MONTH)"
+else
+    echo "  ✓ Frontmatter updated: $YEAR ($START_MONTH)"
+fi
 
 # Step 4: Find and convert PDFs, handle multi-page
 echo "🖼️  Converting PDFs to JPG..."

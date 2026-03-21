@@ -412,8 +412,10 @@ $endif$
 $if(start_month)$
 $if(end_month)$
 {\fontsize{10pt}{12pt}\selectfont $start_month$ - $end_month$\par}
-\vspace{4em}
+$else$
+{\fontsize{10pt}{12pt}\selectfont $start_month$\par}
 $endif$
+\vspace{4em}
 $endif$
 
 

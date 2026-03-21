@@ -123,12 +123,13 @@ type: Combined
 EOF
 
 # Check if CSV file exists to filter daily notes
-CSV_FILE="$EXPORT_DIR/Daily Notes (All).csv"
+# Support any CSV name (Capacities changes this between exports)
+CSV_FILE=$(find "$EXPORT_DIR" -maxdepth 1 -name "*.csv" 2>/dev/null | head -1)
 daily_note_count=0
 
 if [ -d "$EXPORT_DIR/DailyNotes" ]; then
-    if [ -f "$CSV_FILE" ]; then
-        echo "  📋 Using CSV filter: Daily Notes (All).csv"
+    if [ -n "$CSV_FILE" ]; then
+        echo "  📋 Using CSV filter: $(basename "$CSV_FILE")"
 
         # Extract file paths from CSV (4th column, skip header)
         # CSV format: title; date; tags; reference
