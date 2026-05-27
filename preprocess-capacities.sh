@@ -156,6 +156,109 @@ print;
 END { print for @buf; }
 ' "$INPUT_FILE"
 
+# Step 1f: Balance italic emphasis across blockquote paragraph boundaries.
+#
+# WHY: In Capacities, a long italicized quote is one continuous span — the
+#      author opens `*` once at the start and closes `*` once at the end,
+#      and Capacities renders the soft line breaks in between as part of
+#      the same italic span. When Step 1e converts those soft breaks into
+#      proper Markdown paragraph breaks (`>` empty lines), Pandoc parses
+#      emphasis paragraph-by-paragraph: the opening `*` in paragraph 1
+#      can no longer find its closing `*` in paragraph N. Pandoc gives up
+#      pairing them, the intermediate paragraphs lose their italics, and
+#      the orphaned `*` characters render as literal asterisks.
+#
+# WHAT: Inside `>`-quote regions, re-balance italic markers across
+#       paragraph boundaries. Each `> ...` text line becomes its own
+#       self-balanced italic context, but italic spans that originally
+#       crossed boundaries are reconstructed by closing at the end of
+#       one line and reopening at the start of the next.
+#
+# HOW:  Single-pass perl state machine:
+#       - Track `$italic_should_continue` across `> ...` text lines in the
+#         same quote region.
+#       - For each text line:
+#           * If `$italic_should_continue` is true, prepend `*` to the
+#             line content AFTER any `>` prefix and any list marker
+#             (so `> 1. text` becomes `> 1. *text` — preserves list
+#             parsing).
+#           * Scan the resulting content for italic state changes.
+#             `**` is treated as a bold marker (skipped, no italic toggle).
+#             `\*` is treated as an escape (the `*` is literal).
+#           * If italic is open at end of line, append `*` to close it
+#             and set `$italic_should_continue = 1` for the next line.
+#       - `>` empty lines pass through; state carries across them.
+#       - State resets when the quote region ends.
+#
+# Bold (`**`) is detected so it doesn't confuse the italic counter, but
+# bold spans across paragraph boundaries are not re-balanced — the data
+# doesnt need it and bold-across-paragraphs is a rarer pattern.
+echo "🔧 Balancing italic emphasis across blockquote paragraphs..."
+perl -i -ne '
+BEGIN { our $in_quote = 0; our $italic_should_continue = 0; }
+
+sub scan_italic_end_state {
+    my ($text, $start_state) = @_;
+    my $open = $start_state;
+    my $n = length($text);
+    my $i = 0;
+    while ($i < $n) {
+        my $c = substr($text, $i, 1);
+        if ($c eq "\\" && $i + 1 < $n) {
+            $i += 2;
+            next;
+        }
+        if ($c eq "*") {
+            if ($i + 1 < $n && substr($text, $i + 1, 1) eq "*") {
+                $i += 2;
+                next;
+            }
+            $open = !$open;
+            $i += 1;
+            next;
+        }
+        $i += 1;
+    }
+    return $open;
+}
+
+if (/^\s*>/) {
+    if (!$in_quote) {
+        $in_quote = 1;
+        $italic_should_continue = 0;
+    }
+    if (/^\s*>\s*$/) {
+        print;
+        next;
+    }
+    chomp(my $line = $_);
+    if ($line =~ /^(\s*>\s*(?:\d+[.)]\s+|[-+*]\s+)?)(.*)$/s) {
+        my $prefix  = $1;
+        my $content = $2;
+        if ($italic_should_continue) {
+            $content = "*" . $content;
+        }
+        my $end_state = scan_italic_end_state($content, 0);
+        if ($end_state) {
+            $content .= "*";
+            $italic_should_continue = 1;
+        } else {
+            $italic_should_continue = 0;
+        }
+        print $prefix, $content, "\n";
+    } else {
+        print;
+    }
+    next;
+}
+
+if ($in_quote) {
+    $in_quote = 0;
+    $italic_should_continue = 0;
+}
+print;
+' "$INPUT_FILE"
+
 # Step 2: Uncomment image lines that reference assets
 sed -i '' 's/<!-- *\(!\[.*\](assets\/[^)]*)\) *-->/\1/g' "$INPUT_FILE"
 
