@@ -294,6 +294,45 @@ fi
 # STEP 4: Build Reference Map
 # ============================================================================
 
+# Strip YAML quote wrappers from a front-matter value.
+#
+# WHY: Capacities writes titles containing characters like ':' wrapped in
+#      single quotes — e.g. `title: 'Anatomy: Exploring the Human Body'` —
+#      because an unquoted colon in YAML would be parsed as a key/value
+#      separator. Our title extractor (a simple grep+sed) takes the value
+#      verbatim, so without this step those literal quotes end up in
+#      references.json and then in the final PDF's index entries.
+#
+# HOW: Detect the YAML quoting style and unwrap accordingly.
+#      - Single-quoted ('...') : YAML escapes an internal ' as ''
+#      - Double-quoted ("...") : YAML escapes \" for " and \\ for \
+#      - Unquoted              : leave the value untouched
+#
+# Anything more elaborate (block scalars, folded strings) is out of scope —
+# Capacities only emits flow-style scalars in the front matter we read.
+strip_yaml_quotes() {
+    local val="$1"
+
+    # Literal apostrophe and "double apostrophe" tokens. Built via ANSI-C
+    # quoting so we don't need to fight bash's quoting rules inside the
+    # parameter-expansion patterns below.
+    local sq=$'\''
+    local sq2=$'\'\''
+
+    if [[ "$val" =~ ^\'(.*)\'$ ]]; then
+        # Single-quoted: unwrap, then collapse YAML's '' escape back to '
+        val="${BASH_REMATCH[1]}"
+        val="${val//$sq2/$sq}"
+    elif [[ "$val" =~ ^\"(.*)\"$ ]]; then
+        # Double-quoted: unwrap, then unescape \" and \\
+        val="${BASH_REMATCH[1]}"
+        val="${val//\\\"/\"}"
+        val="${val//\\\\/\\}"
+    fi
+
+    printf '%s' "$val"
+}
+
 echo -e "${GREEN}📇 Step 4: Building reference map...${NC}"
 
 REFERENCE_MAP="source/references.json"
@@ -325,6 +364,12 @@ for folder in People Organizations Projects Books Definitions; do
                     grep -E '^[ \t]*title:' | \
                     sed -E 's/^[ \t]*title:[ \t]*(.*)/\1/'
                 )
+
+                # Unwrap any YAML quote wrappers around the title — required for
+                # titles containing characters like ':' that YAML forces into a
+                # quoted form. Without this, the surrounding quotes leak into
+                # references.json and then into the PDF's index entries.
+                title=$(strip_yaml_quotes "$title")
                 #echo "title: $title"
                 
                 if [ -n "$title" ]; then
