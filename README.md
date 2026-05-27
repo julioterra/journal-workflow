@@ -602,6 +602,20 @@ Common issues:
 - Test print one page to check sizing
 - Check that fonts are embedded (they should be automatically)
 
+## 🤝 Contributing
+
+### One-time setup after cloning
+
+This repo ships with a project-specific git hook that prevents accidental commits directly on `main`. Activate it once after cloning:
+
+```bash
+git config core.hooksPath hooks
+```
+
+After that, any `git commit` attempted on `main` (or `master`) will be rejected, with a reminder to create a topic branch first (`git checkout -b fix/...` or `git checkout -b feature/...`). To bypass intentionally — for example, a hand-crafted merge commit — pass `--no-verify` to `git commit`.
+
+The hook lives at [hooks/pre-commit](hooks/pre-commit) and is committed alongside the code, so it stays in sync across clones.
+
 ## 📖 Resources
 
 - [Pandoc Manual](https://pandoc.org/MANUAL.html)

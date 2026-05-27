@@ -1,0 +1,36 @@
+#!/bin/sh
+#
+# pre-commit hook: refuse commits made directly on protected branches.
+#
+# Per the workflow in CLAUDE.md, all feature and fix work must live on a
+# topic branch (e.g. `fix/short-description`, `feature/short-description`)
+# and only merge into `main` once tested and confirmed working. This hook
+# enforces that rule by rejecting any commit attempt when HEAD points at
+# one of the protected branches below.
+#
+# To bypass intentionally (rare — e.g. a hand-crafted merge commit), pass
+# `--no-verify` to `git commit`. Think twice before doing so.
+
+protected_branches="main master"
+
+current_branch=$(git symbolic-ref --short HEAD 2>/dev/null || echo "")
+
+for protected in $protected_branches; do
+    if [ "$current_branch" = "$protected" ]; then
+        # Red error for visibility; the message body stays plain so it
+        # remains readable if the terminal swallows ANSI escapes.
+        printf '\033[31mError: refusing to commit directly on "%s".\033[0m\n' "$protected" >&2
+        echo "" >&2
+        echo "Per CLAUDE.md, all work must happen on a topic branch." >&2
+        echo "Create one and re-stage your changes:" >&2
+        echo "" >&2
+        echo "    git checkout -b fix/short-description" >&2
+        echo "    git checkout -b feature/short-description" >&2
+        echo "" >&2
+        echo "If you really need to bypass this (e.g. a manual merge commit)," >&2
+        echo "pass --no-verify to git commit." >&2
+        exit 1
+    fi
+done
+
+exit 0
