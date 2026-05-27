@@ -71,6 +71,91 @@ sed -i '' 's/^#ideas$/## Ideas/' "$INPUT_FILE"
 echo "🔧 Removing mentions from headings..."
 sed -i '' -E 's/^(#+ .*)\[([^]]+)\]\([^)]+\)/\1\2/g' "$INPUT_FILE"
 
+# Step 1e: Normalize Capacities blockquote soft breaks.
+#
+# WHY: When Shift+Return is used inside a Capacities quote block, the export
+#      represents the break as a zero-width space (U+200B, UTF-8 bytes
+#      E2 80 8B) — either alone on a line, or as a prefix on a continuation
+#      paragraph. Pandoc treats ZWSP as a printable character, not whitespace,
+#      so the blockquote survives only via lazy continuation and the entire
+#      region collapses into one paragraph. Worse, anywhere Capacities emits
+#      a TRULY blank line inside the quote (e.g. after a numbered list), the
+#      blockquote terminates and the rest of the quoted content escapes into
+#      body text. The same collapse also breaks per-paragraph emphasis (the
+#      `*italic*` runs can span the collapse) so closing `*` markers can lose
+#      their partners and end up rendered as literal asterisks.
+#
+# WHAT: Rewrite the ZWSP convention into proper Markdown blockquote syntax,
+#       but only INSIDE detected `>`-quote regions, so ZWSPs elsewhere in
+#       body text (a different soft-break pattern Capacities also uses) are
+#       left untouched.
+#
+# HOW:  Single-pass perl state machine, line by line:
+#         - Enter a quote region on any line starting with `>` (after optional
+#           leading whitespace).
+#         - While inside, rewrite:
+#             * ZWSP-only lines               → `>`     (paragraph break in quote)
+#             * lines that start with a ZWSP  → `> …`   (strip ZWSP, prefix `> `)
+#             * a truly blank line followed by a ZWSP-prefixed line → `>` for
+#               the blank too (catches the Capacities post-list artifact that
+#               would otherwise terminate the quote).
+#         - Exit the region on any other non-blank line.
+#       Buffered blank lines are held in @buf so we can decide retroactively
+#       whether they continue the quote (next line is ZWSP/`>`) or end it.
+echo "🔧 Normalizing blockquote soft breaks..."
+perl -i -ne '
+BEGIN { our $in_quote = 0; our @buf = (); }
+
+# A new or continuing `>`-marked quote line
+if (/^\s*>/) {
+    # Buffered blanks before a `>` line are intentional. In Capacities a
+    # truly blank line between two `>` paragraphs is the signal that the
+    # author wants TWO SEPARATE quotes (not one multi-paragraph quote).
+    # Emit the blanks verbatim so Pandoc splits them naturally. Note this
+    # only affects the `>`-then-blank-then-`>` case; ZWSP-pattern soft-break
+    # continuations of the same quote are handled in the branches below.
+    print for @buf; @buf = ();
+    $in_quote = 1;
+    print;
+    next;
+}
+
+if ($in_quote) {
+    # ZWSP-only line: paragraph gap inside the quote
+    if (/^\s*\xE2\x80\x8B\s*$/) {
+        print ">\n" for @buf; @buf = ();
+        print ">\n";
+        next;
+    }
+    # ZWSP-prefixed continuation: strip the ZWSP and prefix `> `
+    if (/^\s*\xE2\x80\x8B(.*)$/s) {
+        print ">\n" for @buf; @buf = ();
+        print "> $1";
+        next;
+    }
+    # Truly blank line: buffer; lookahead on the next line decides whether
+    # this is a quote continuation (next line is a `>` or ZWSP line) or a
+    # real paragraph break that ends the quote.
+    if (/^\s*$/) {
+        push @buf, $_;
+        next;
+    }
+    # Anything else ends the quote. Buffered blanks were a real paragraph
+    # break, so emit them verbatim.
+    $in_quote = 0;
+    print for @buf; @buf = ();
+    print;
+    next;
+}
+
+# Outside any quote region — pass through unchanged. @buf is only filled
+# while $in_quote is true, so this flush is a no-op safety net.
+print for @buf; @buf = ();
+print;
+
+END { print for @buf; }
+' "$INPUT_FILE"
+
 # Step 2: Uncomment image lines that reference assets
 sed -i '' 's/<!-- *\(!\[.*\](assets\/[^)]*)\) *-->/\1/g' "$INPUT_FILE"
 
